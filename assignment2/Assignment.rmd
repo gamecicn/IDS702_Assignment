@@ -35,38 +35,68 @@ df$DurationCent <- df$Duration - mean(df$Duration)
 
 ##### 1.1 Fit a regression model for predicting the interval between eruptions from the duration of the previous one, to the data, and interpret your results.
 
+
+
 ```{r echo = FALSE}
 
 model <- lm(Interval~DurationCent, data=df)
 
 ```
-** Model Result: **
+\hfill\break
 
-```{r echo = FALSE}
+**Model Result:**
+
+
+```{r echo = FALSE, results='asis'}
 
 xtable(model)
 
-#par(mfrow=c(2,2))
-#plot(model, which = 1, col=c("blue4"))
-#plot(model, which = 2, col=c("blue4"))
-#plot(model, which = 3, col=c("blue4"))
-#plot(model, which = 5, col=c("blue4"))
+par(mfrow=c(2,2))
+plot(model, which = 1, col=c("blue4"))
+plot(model, which = 2, col=c("blue4"))
+plot(model, which = 3, col=c("blue4"))
+plot(model, which = 5, col=c("blue4"))
 
 ```
 
-** Interpret: **
+**Interpret:**
 According to the observing data, the average interval between eruptions is 71 minutes. Every minute change of erupting duration before the gap will change the interval in the same direction by 10.7 minutes. 
 
 
 ##### 1.2 Include the 95% confidence interval for the slope, and explain what the interval reveals about the relationship between duration and waiting time.
 
+\hfill\break
+
+**95% Confidence Interval:**
+
+```{r echo = FALSE, results='asis'}
+
+xtable(confint(model))
+
+```
+
+\hfill\break
+
+**Interpret:**
+
+The 95% confidence interval for DurationCent (Centered duration) to predict the interval between two eruptions is (9.49, 11.98) minutes. Because 0 does not appear in the interval, there is enough evidence to say a relationship between duration and interval. 
+
 
 ##### 1.3 Describe in a few sentences whether or not you think the regression assumptions are plausible based on residual plots (do not include any plots).
+
+**Description:**
+
+From the residual plot, there is no evidence that the regression assumptions were broke. 
+- There is no apparent trend in the residual scatter plot. 
+- The distribution of residuals is interdependent in the observations.
+- The distribution of residuals is very like a normal distribution. 
 
 
 ##### 1.4 Fit another regression model for predicting interval from duration and day. Treat day as a categorical/factor variable. Is there a significant difference in mean intervals for any of the days (compared to the first day)? Interpret the effects of controlling for the days (do so only for the days with significant effects, if any).
 
+
 ##### 1.5 Perform an F-test to compare this model to the previous model excluding day. In context of the question, what can you conclude from the results of the F-test?
+
 
 ##### 1.6 Using k-fold cross validation (with k=10), compare the average RMSE for this model and the average RMSE for the previous model excluding day. Which model appears to have higher predictive accuracy based on the average RMSE values?
  
