@@ -129,17 +129,191 @@ xtable(ftest_result)
 According to the F-test, the p-value is 0.98, which means we cannot refuse the hypothesis that the two models are equal to predict interval. We can also conclude that there is no interaction between days and duration. 
 
 
-
-
 ##### 1.6 Using k-fold cross validation (with k=10), compare the average RMSE for this model and the average RMSE for the previous model excluding day. Which model appears to have higher predictive accuracy based on the average RMSE values?
  
 ```{r echo = FALSE, results='asis'}
 
+set.seed(123) # use whatever number you want
+
+new_df <- df[sample(nrow(df)),]
+# Define the number of folds you want
+K <- 10
+# Define a matrix to save your results into
+RSME <- matrix(0,nrow=K,ncol=1)
+# Split the row indexes into k equal parts
+kth_fold <- cut(seq(1,nrow(df)),breaks=K,labels=FALSE)
+# Now write the for loop for the k-fold cross validation
+
+
+for(k in 1:K){
+  # Split your data into the training and test datasets
+  test_index <- which(kth_fold==k)
+  train <- df[-test_index,]
+  test <- df[test_index,]
+  
+  y_test_pred <- predict(model_withday, test)
+  testMSE <- mean((df$Interval- y_test_pred)^2);
+  # Now that you've split the data, 
+  RSME[k,] <- sqrt(testMSE)
+}
+
+RSME_withday = mean(RSME)
+
+
+for(k in 1:K){
+  # Split your data into the training and test datasets
+  test_index <- which(kth_fold==k)
+  train <- df[-test_index,]
+  test <- df[test_index,]
+  
+  y_test_pred <- predict(model, test)
+  testMSE <- mean((df$Interval- y_test_pred)^2);
+  # Now that you've split the data, 
+  RSME[k,] <- sqrt(testMSE)
+}
+
+RSME_normal = mean(RSME)
+#RSME_withday
+```
+\hfill\break
+**Interpret:**
+
+Model without days has higher predictive accuracy based on the average RMSE.   
+
+\newpage
+
+# Question2 
+
+```{r echo = FALSE}
+
+#2.1 Do mothers who smoke tend to give birth to babies with lower weights than #mothers who do not smoke?
+#
+#2.2 What is a likely range for the difference in birth weights for smokers and #non-smokers?
+#
+#2.3 Is there any evidence that the association between smoking and birth weight #differs by mother’s race? If so, characterize those differences.
+#
+#2.4 Are there other interesting associations with birth weight that are worth #mentioning?
+  
+```
+
+```{r echo = FALSE}
+
+rm(list = ls())
+
+df <- read.csv("smoking.csv", stringsAsFactors = FALSE, sep = "," ,dec="," )
+
+#Remove gestation
+df = subset(df, select = -c(date, gestation))
+
+# collapse race categories from 0 - 5 into one category for race = white
+df[df$mrace < 6, ]$mrace = 5
+df[df$med <= 7 & df$med >= 6, ]$med = 7
+
+
+# Factorize 
+df$med   <- as.factor(df$med)
+df$mrace <- as.factor(df$mrace)
+df$smoke <- as.factor(df$smoke)
+
+# Some info of data
+#==============================================
+# parity - Total number of previous pregnancies, including fetal deaths and still births
+
+# mage - mother’s age in years at termination of pregnancy
+
+# mht - mother’s height in inches
+
+# mpregwt - 	mother’s pre-pregnancy weight in pounds
+
+# inc - family yearly income in 2500 increments. 0 = under 2500, 1 = 2500-4999, …, 9 = 15000+
+
+# smoke - smoke or not 
 
 ```
 
 
-# Question2 
+```{r}
+
+# Do mothers who smoke tend to give birth to babies with lower weights than mothers who do not smoke?
+
+# What is a likely range for the difference in birth weights for smokers and non-smokers?
+
+# Is there any evidence that the association between smoking and birth weight differs by mother’s race? If so, characterize those differences.
+
+# Are there other interesting associations with birth weight that are worth mentioning?
+
+# Analyze the data and investigate these questions using a linear model. Also, do the following.
+
+# names
+# "id","bwt.oz","parity","mrace","mage","med","mht","mpregwt","inc","smoke"  
+
+ 
+```
+
+```{r echo = FALSE}
+
+hist(df$bwt.oz)
+# Conclude:  df$bwt.oz is normal distribution 
+
+
+hist(df$parity)
+#df$parity_log <- log(df$parity)
+#hist(df$parity_log)
+
+hist(df$mage)
+df$mage_log <- log(df$mage)
+hist(df$mage_log)
+
+hist(df$mht)
+hist(df$mpregwt)
+hist(df$inc)
+
+```
+
+```{r echo = FALSE}
+
+# Plot 
+
+plot(y = df$bwt.oz, x = df$parity) 
+plot(y = df$bwt.oz, x = df$mage_log) 
+plot(y = df$bwt.oz, x = df$mht) 
+plot(y = df$bwt.oz, x = df$mpregwt) 
+plot(y = df$bwt.oz, x = df$inc) 
+
+# Terriable no linear relation ship
+
+```  
+
+```{r echo = FALSE}
+
+# 
+raw_model <- lm(bwt.oz ~ parity +  mrace  + mage_log + med + mht + mpregwt + inc + smoke, data=df)
+
+
+```
+
+## Summary
+
+
+## Introduction
+
+
+## Data
+
+
+## Model
+
+
+## Conclusion
+
+
+
+
+
+
+
+
+
 
 
 
