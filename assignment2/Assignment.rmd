@@ -6,6 +6,7 @@ output:
   word_document: default
   html_document:
     df_print: paged
+    
 ---
 
 ```{r setup, echo = FALSE, include=FALSE}
@@ -414,12 +415,13 @@ ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
 
 ```
 
-
+\hfill\break
 
 ## Summary
 
 A linear regression model was built to query the relationship between maternal smoking and the baby's birth weight IN this investigation and some related questions. The model indicates a strong relationship between maternal smoking with a baby's birth weight. By controlling other factors, the mother's smoke would decrease the baby's birth weight by 9.35 oz on average.
 
+\hfill\break
 
 ## Introduction
 
@@ -431,11 +433,118 @@ This analysis based on a dataset from a study carried between 1960 and 1967 at t
 
 - Apart from the mother's smoking, is there any other factors in the data that would affect birth weight. 
 
+\hfill\break
+
 ## Data
 
+\hfill\break
+
+### Overview
+
+The dataset includes `r nrow(df)` observations. Since it was already cleaned, there is not missing data in it. Here are important columns that would be included in the analysis:
+
+| Col Name      | Status     | Meaning     |
+| :-------------: | :----------: | :-----------: |
+| bwt.oz | Perfectly normal distribution   |  Birth weight in ounces. Its distribution is.  |
+| parity | Like exponential distribution, uneven |  Total number of previous pregnancies, including fetal deaths and still births. |
+| mrace | Category variable , uneven  | Mother’s race or ethnicity |
+| mage |  Nearly normal  | Mother’s age in years at termination of pregnancy |
+| med |  Uneven  | Mother’s education |
+| mht |  Nearly normal  | 	Mother’s height in inches |
+| mpregwt |  Nearly normal  | 	Mother’s pre-pregnancy weight in pounds |
+| inc |  Like exponential distribution  | 	Family yearly income in 2500 increments|
+| smoke |  Nearly even  | 	Does mother smoke?|
+
+
+**Conclusion:**
+
+- The response variable is in good shape.
+- Parity and inc should be transformed with 'log.'
+- Parity inc, and med have some segments which have only a few observations.  
+
+\hfill\break
+
+### Relationship between the response variable and each predictor
+
+\hfill\break
+
+```{r echo = FALSE, out.width=c('33%', '33%' , '33%'), fig.show='hold'}
+
+plot(y = df$bwt.oz, x = log(df$parity), main = "Fig. 1") 
+plot(y = df$bwt.oz, x = df$mage, main = "Fig. 2") 
+plot(y = df$bwt.oz, x = df$mht, main = "Fig. 3") 
+plot(y = df$bwt.oz, x = df$mpregwt, main = "Fig. 4") 
+plot(y = df$bwt.oz, x = log(df$inc), main = "Fig. 5") 
+boxplot(bwt.oz~smoke,  data=df, main = "Fig. 6")
+boxplot(bwt.oz~med,  data=df, main = "Fig. 7")
+boxplot(bwt.oz~mrace,  data=df, main = "Fig. 8")
+
+```
+
+**Conclusion:**
+
+- Minor relationships can be found in figure 1 and figure4. 
+- In figure 6, box1's response value is higher than box2's, which indicates that maybe there is a significant difference in birth weight between the two groups.
+
+
+### Relationship between Smoke and Birth Weight under other factors
+
+\hfill\break
+
+```{r echo = FALSE, out.width=c('33%', '33%' , '33%'), fig.show='hold', message=FALSE}
+
+
+
+ggplot(df,aes(x=parity, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="grey") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ smoke) 
+
+ggplot(df,aes(x=mage, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="grey") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ smoke) 
+
+ggplot(df,aes(x=mht, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="grey") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ smoke) 
+
+ggplot(df,aes(x=mpregwt, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="grey") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ smoke) 
+
+ggplot(df,aes(x=inc, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="grey") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ smoke) 
+
+
+ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
+  geom_boxplot()  +
+  scale_fill_brewer(palette="Blues") +
+  theme_classic() + theme(legend.position="none") +
+  facet_wrap( ~ mrace)
+
+ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
+  geom_boxplot()  +
+  scale_fill_brewer(palette="Blues") +
+  theme_classic() + theme(legend.position="none") +
+  facet_wrap( ~ med)
+
+```
+
+\hfill\break
+**Conclusion:**
+- The non-smoking group's Brith Weight is higher than the smoking group under each condition.  
+
+
+\hfill\break
 
 ## Model
 
+\hfill\break
 
 ## Conclusion
 
