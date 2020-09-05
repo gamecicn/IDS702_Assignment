@@ -418,13 +418,18 @@ ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
 
 ## Summary
 
-A linear regression model was built to query the relationship between maternal smoking and the baby's birth weight IN this investigation. The model indicates a strong relationship between maternal smoking with a baby's birth weight. By controlling other factors, the mother's smoke would decrease the baby's birth weight by 9.35 oz on average.
+A linear regression model was built to query the relationship between maternal smoking and the baby's birth weight IN this investigation and some related questions. The model indicates a strong relationship between maternal smoking with a baby's birth weight. By controlling other factors, the mother's smoke would decrease the baby's birth weight by 9.35 oz on average.
 
 
 ## Introduction
 
+This analysis based on a dataset from a study carried between 1960 and 1967 at the Kaiser Foundation Hospital in Oakland, CA. `r nrow(df)` observations were included in the analysis. Linear regression was exploited as the primary technique to quest the answer to the following questions. 
 
+- Is there any relationship between brith weight and mother's smoking? If any, to what extend brith weight was affected by the behavior. A quantifiable  relationships is expected in the conlusion of this study. 
 
+- If the relationship exists, is it behaved in the same manner under any circumstance? Since the dataset also includes the mother's age, race, educational background, income, and other factors, it is natural to think about whether the relationship behaves the same in different situations.
+
+- Apart from the mother's smoking, is there any other factors in the data that would affect birth weight. 
 
 ## Data
 
