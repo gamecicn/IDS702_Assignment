@@ -1,5 +1,5 @@
 ---
-title: "Assignment 1"
+title: "Assignment 2"
 author: "Maobin Guo"
 output:
   pdf_document: default
@@ -182,20 +182,10 @@ Model without days has higher predictive accuracy based on the average RMSE.
 
 \newpage
 
-# Question2 
 
-```{r echo = FALSE}
+#         MATERNAL SMOKING AND BIRTH WEIGHTS
 
-#2.1 Do mothers who smoke tend to give birth to babies with lower weights than #mothers who do not smoke?
-#
-#2.2 What is a likely range for the difference in birth weights for smokers and #non-smokers?
-#
-#2.3 Is there any evidence that the association between smoking and birth weight #differs by mother’s race? If so, characterize those differences.
-#
-#2.4 Are there other interesting associations with birth weight that are worth #mentioning?
-  
-```
-
+ 
 ```{r echo = FALSE}
 
 rm(list = ls())
@@ -215,42 +205,17 @@ df$med   <- as.factor(df$med)
 df$mrace <- as.factor(df$mrace)
 df$smoke <- as.factor(df$smoke)
 
-# Some info of data
-#==============================================
-# parity - Total number of previous pregnancies, including fetal deaths and still births
+df$parityCent <- df$parity - mean(df$parity)
+df$mageCent <- df$mage - mean(df$mage)
+df$mhtCent <- df$mht - mean(df$mht)
+df$mpregwtCent <- df$mpregwt - mean(df$mpregwt)
 
-# mage - mother’s age in years at termination of pregnancy
-
-# mht - mother’s height in inches
-
-# mpregwt - 	mother’s pre-pregnancy weight in pounds
-
-# inc - family yearly income in 2500 increments. 0 = under 2500, 1 = 2500-4999, …, 9 = 15000+
-
-# smoke - smoke or not 
 
 ```
 
 
-```{r}
 
-# Do mothers who smoke tend to give birth to babies with lower weights than mothers who do not smoke?
-
-# What is a likely range for the difference in birth weights for smokers and non-smokers?
-
-# Is there any evidence that the association between smoking and birth weight differs by mother’s race? If so, characterize those differences.
-
-# Are there other interesting associations with birth weight that are worth mentioning?
-
-# Analyze the data and investigate these questions using a linear model. Also, do the following.
-
-# names
-# "id","bwt.oz","parity","mrace","mage","med","mht","mpregwt","inc","smoke"  
-
- 
-```
-
-```{r echo = FALSE}
+```{r echo = FALSE, include=FALSE}
 
 hist(df$bwt.oz)
 # Conclude:  df$bwt.oz is normal distribution 
@@ -270,7 +235,7 @@ hist(df$inc)
 
 ```
 
-```{r echo = FALSE}
+```{r echo = FALSE, include=FALSE}
 
 # Plot 
 
@@ -284,18 +249,181 @@ plot(y = df$bwt.oz, x = df$inc)
 
 ```  
 
-```{r echo = FALSE}
 
-# 
-raw_model <- lm(bwt.oz ~ parity +  mrace  + mage_log + med + mht + mpregwt + inc + smoke, data=df)
+```{r echo = FALSE, include=FALSE}
 
+boxplot(bwt.oz~smoke,  data=df)
+boxplot(bwt.oz~med,  data=df)
+boxplot(bwt.oz~mrace,  data=df)
 
 ```
 
+
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=parity, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ med) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=parity, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ mrace) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=parity, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ smoke) 
+
+```
+
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=mage, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ med) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=mht, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ med) 
+
+```
+
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=mpregwt, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ med) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=inc, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ med) 
+
+```
+
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=inc, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ mrace) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=parity, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ mrace) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=mht, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ mrace) 
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+ggplot(df,aes(x=mpregwt, y=bwt.oz)) +
+  geom_point(alpha = .5,colour="blue4") +
+  geom_smooth(method="lm",col="red3") + theme_classic() +
+  facet_wrap( ~ mrace) 
+
+```
+
+
+
+```{r echo = FALSE, include=FALSE}
+
+# 
+raw_model_1 <- lm(bwt.oz ~ parity + mrace + mage_log + med + mht + mpregwt + inc + smoke, data=df)
+
+raw_model_1 <- lm(bwt.oz ~ parity + mrace + mage_log + mht + mpregwt + inc + smoke, data=df)
+
+
+raw_model_2 <- lm(bwt.oz ~ parity + mrace*mht + mage_log + mpregwt  + smoke, data=df)
+
+raw_model_3 <- lm(bwt.oz ~ parity + smoke  + mage_log + mpregwt  + mht, data=df)
+
+```
+
+```{r echo = FALSE, include=FALSE}
+
+#model_null <- lm(bwt.oz~1,data=df)
+#raw_full <- lm(bwt.oz ~ parity + mrace + mage_log + med + mht + mpregwt + inc + smoke, data=df)
+#
+#Model_forward_aic <- step(model_null, scope = formula(raw_full),direction="forward",trace=0)
+#
+#Model_forward_bic <- step(model_null, scope = formula(raw_full),direction="forward",trace=0, k = #log(n))
+#
+#
+#Model_back_aic <- step(raw_full, direction="backward",trace=0)
+#
+#Model_back_bic <- step(raw_full, direction="backward",trace=0, k = log(n))
+#
+#Model_both_aic <- step(model_null, scope = formula(raw_full),direction="both",trace=0)
+#
+#Model_both_bic <- step(model_null, scope = formula(raw_full),direction="both",trace=0, k = #log(n))
+
+final_model = lm(formula = bwt.oz ~ smoke + mht + mrace + mpregwt + parity, data = df)
+
+# TO Answer :2
+#What is a likely range for the difference in birth weights for smokers and non-smokers?
+# confint(final_model) 
+
+# TO Answer :3
+#
+#Is there any evidence that the association between smoking and birth weight differs by mother’s #race? If so, characterize those differences.
+
+ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
+  geom_boxplot()  +
+  scale_fill_brewer(palette="Blues") +
+  theme_classic() + theme(legend.position="none") +
+  facet_wrap( ~ mrace)
+
+```
+
+
+
 ## Summary
+
+A linear regression model was built to query the relationship between maternal smoking and the baby's birth weight IN this investigation. The model indicates a strong relationship between maternal smoking with a baby's birth weight. By controlling other factors, the mother's smoke would decrease the baby's birth weight by 9.35 oz on average.
 
 
 ## Introduction
+
+
 
 
 ## Data
