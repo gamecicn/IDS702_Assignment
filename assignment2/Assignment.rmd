@@ -222,13 +222,9 @@ hist(df$bwt.oz)
 # Conclude:  df$bwt.oz is normal distribution 
 
 
-hist(df$parity)
-#df$parity_log <- log(df$parity)
-#hist(df$parity_log)
-
-hist(df$mage)
-df$mage_log <- log(df$mage)
-hist(df$mage_log)
+df$parity_sqrt <- sqrt(df$parity)
+df$inc_sqrt <- sqrt(df$inc)
+ 
 
 hist(df$mht)
 hist(df$mpregwt)
@@ -241,7 +237,6 @@ hist(df$inc)
 # Plot 
 
 plot(y = df$bwt.oz, x = df$parity) 
-plot(y = df$bwt.oz, x = df$mage_log) 
 plot(y = df$bwt.oz, x = df$mht) 
 plot(y = df$bwt.oz, x = df$mpregwt) 
 plot(y = df$bwt.oz, x = df$inc) 
@@ -368,21 +363,21 @@ ggplot(df,aes(x=mpregwt, y=bwt.oz)) +
 ```{r echo = FALSE, include=FALSE}
 
 # 
-raw_model_1 <- lm(bwt.oz ~ parity + mrace + mage_log + med + mht + mpregwt + inc + smoke, data=df)
-
-raw_model_1 <- lm(bwt.oz ~ parity + mrace + mage_log + mht + mpregwt + inc + smoke, data=df)
-
-
-raw_model_2 <- lm(bwt.oz ~ parity + mrace*mht + mage_log + mpregwt  + smoke, data=df)
-
-raw_model_3 <- lm(bwt.oz ~ parity + smoke  + mage_log + mpregwt  + mht, data=df)
+#raw_model_1 <- lm(bwt.oz ~ parity + mrace + mage_log + med + mht + mpregwt + inc + smoke, data=df)
+#
+#raw_model_1 <- lm(bwt.oz ~ parity + mrace + mage_log + mht + mpregwt + inc + smoke, data=df)
+#
+#
+#raw_model_2 <- lm(bwt.oz ~ parity + mrace*mht + mage_log + mpregwt  + smoke, data=df)
+#
+#raw_model_3 <- lm(bwt.oz ~ parity + smoke  + mage_log + mpregwt  + mht, data=df)
 
 ```
 
 ```{r echo = FALSE, include=FALSE}
 
 #model_null <- lm(bwt.oz~1,data=df)
-#raw_full <- lm(bwt.oz ~ parity + mrace + mage_log + med + mht + mpregwt + inc + smoke, data=df)
+#raw_full <- lm(bwt.oz ~ parity_sqrt + mrace + mage + med + mht + mpregwt + inc_sqrt + smoke, data=df)
 #
 #Model_forward_aic <- step(model_null, scope = formula(raw_full),direction="forward",trace=0)
 #
@@ -456,10 +451,10 @@ The dataset includes `r nrow(df)` observations. Since it was already cleaned, th
 | smoke |  Nearly even  | 	Does mother smoke?|
 
 
-**Conclusion:**
+**Summary:**
 
 - The response variable is in good shape.
-- Parity and inc should be transformed with 'log.'
+- Parity and inc should be transformed.
 - Parity inc, and med have some segments which have only a few observations.  
 
 \hfill\break
@@ -468,20 +463,20 @@ The dataset includes `r nrow(df)` observations. Since it was already cleaned, th
 
 \hfill\break
 
-```{r echo = FALSE, out.width=c('33%', '33%' , '33%'), fig.show='hold'}
+```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
 
-plot(y = df$bwt.oz, x = log(df$parity), main = "Fig. 1") 
+plot(y = df$bwt.oz, x = sqrt(df$parity), main = "Fig. 1") 
 plot(y = df$bwt.oz, x = df$mage, main = "Fig. 2") 
 plot(y = df$bwt.oz, x = df$mht, main = "Fig. 3") 
 plot(y = df$bwt.oz, x = df$mpregwt, main = "Fig. 4") 
-plot(y = df$bwt.oz, x = log(df$inc), main = "Fig. 5") 
+plot(y = df$bwt.oz, x = sqrt(df$inc), main = "Fig. 5") 
 boxplot(bwt.oz~smoke,  data=df, main = "Fig. 6")
 boxplot(bwt.oz~med,  data=df, main = "Fig. 7")
 boxplot(bwt.oz~mrace,  data=df, main = "Fig. 8")
 
 ```
 
-**Conclusion:**
+**Summary:**
 
 - Minor relationships can be found in figure 1 and figure4. 
 - In figure 6, box1's response value is higher than box2's, which indicates that maybe there is a significant difference in birth weight between the two groups.
@@ -491,7 +486,7 @@ boxplot(bwt.oz~mrace,  data=df, main = "Fig. 8")
 
 \hfill\break
 
-```{r echo = FALSE, out.width=c('33%', '33%' , '33%'), fig.show='hold', message=FALSE}
+```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold', message=FALSE}
 
 
 
@@ -536,17 +531,123 @@ ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
 ```
 
 \hfill\break
-**Conclusion:**
+**Summary:**
+
 - The non-smoking group's Brith Weight is higher than the smoking group under each condition.  
 
-
-\hfill\break
 
 ## Model
 
 \hfill\break
 
-## Conclusion
+### Variable Transformation and Selection
+
+##### Transformation
+
+Since the response variable is in good shape of the normal distribution, there is no need to transform it. Predict variables: 'parity' and 'inc' should be transformed because their distribution is similar to the exponential distribution. Square was chosen to exert on 'parity' and 'inc' because they all contain 0 value, which would cause an error for the log operation. 
+
+##### Variable Selection
+
+According to the exploratory data analysis (EDA) plot, only some predict variables show an apparent relationship with the response variable. However, quantitive analysis is required before exclude them from the final model. A Multiple Linear Regression (MLR) model, including all factors, was built to explore each predictor variable's significance of influence on the response variable. Statistic methods such as p-value, ANOVA, and VIF were used on the preliminary model and models based on it to test whether a variable is important enough for staying at the model. R's auto-explore function 'step' with various metrics (AIC, BIC) and actions (forward, backward, stepwise) are also exploited to select variables. 
+    
+
+### Final Model and Assessment 
+
+The final modle is :
+
+$$
+  bwt.oz = \beta_{1}*smoke_{i} + \beta_{2}*mht_{i} + \beta_{3}*mrace_{i} + \beta_{4}*mpregwt_{i} + \beta_{5}*parity_{i} + \beta_{0} + \varepsilon_{i}
+$$
+
+```{r echo = FALSE, results='asis'}
+xtable(final_model)
+
+fsta <- summary(final_model)$fstatistic
+model_pvalue <- pf(fsta[1],fsta[2],fsta[3],lower.tail=F)
+attributes(model_pvalue) <- NULL
+
+```
+
+- R Square is : `r summary(final_model)$r.squared`
+- Model p-value is : `r model_pvalue`
+
+**Cofidence Itervals (95%) for each slope:**
+
+```{r echo = FALSE, results='asis'}
+xtable(confint(final_model))
+```
+
+#### Assessment
+
+\hfill\break
+
+```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
+
+plot(final_model, which = 1, col=c("blue4"))
+plot(final_model, which = 2, col=c("blue4"))
+plot(final_model, which = 3, col=c("blue4"))
+plot(final_model, which = 4, col=c("blue4"))
+
+```
+
+**Linearity**
+
+- According to the residuals plot, residuals are normally distributed in this model.
+
+
+**Correlation of Errors**
+
+- There is no apparent trend in the errors. It is predictable since this dataset is no time-series data. 
+
+**Constant variance of error**
+
+- There is no perceivable pattern in the residuals along with the fitted value.
+
+**Outliers & High-leverage**
+
+- Outliers: Some outliers exist in the dataset. However, there are no potential gains of the model's performance after removing them. One potential reason is that the dataset is big enough to ignore a few outlier's influences.
+
+- High Leverage: There are a few high leverage points. However, their cook distance indicates that they are not high influence points.  
+
+**Multi-Collinearity**
+
+- According to the VIF value of the model, no multi-collinearity 
+
+**interaction**
+
+- No apparent interaction was found between selected variables. 
+
+
+### Summary
+
+According to abvoe verification, the valitiy of the model can be confirmed. Moreover, several conclusion can be deduced from model:
+
+- The smoke behavior can significantly decrease birth weight. 95% CI is (confint(final_model)[2,1], confint(final_model)[2,2])
+
+- For some races, smoking could bring down birth weight more significantly than other races. 
+
+-  Apart from smoking, 'mht', 'parity', and 'mpregwt' also significantly influence birth weights in statistics but slightly in science. Some races (black, Asian) have evidence negative influence on birth weights while other rances have no such influence.  
+
+\hfill\break
+
+## Conclusion and Deficiency
+
+
+**Conclusion**
+
+
+From the analysis, a multi-linear regression model was built to identify the relationship between maternal smoking and birth weights. The negative relationship was confirmed quantitively by the model. Some other birth weight factors were found, but their influence is slight, especially compared with smoking. The race is a complex influence; some races tend to have lighter babies than others. 
+
+**Deficiency**
+
+
+1. The final model's R-Square value is only 0.15, which means the model cannot explain the response value well.
+
+2. There are some outliers in the model. Even though some index indicates that these outliers are unimportant, further investigation is needed. 
+
+
+
+
 
 
 
