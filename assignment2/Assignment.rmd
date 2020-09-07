@@ -107,7 +107,8 @@ model_withday <- lm(Interval~DurationCent+Date, data=df)
 \hfill\break
 
 There is no significant difference in mean intervals for any of the days. Because:
-- p-value of each day is >> 0.05 
+
+- p-value of each day is > 0.05 
 - The confidence interval of each day's slope contains 0. 
 
 Days is an invalid factor to predict intervals with duration.
@@ -235,7 +236,6 @@ hist(df$inc)
 ```{r echo = FALSE, include=FALSE}
 
 # Plot 
-
 plot(y = df$bwt.oz, x = df$parity) 
 plot(y = df$bwt.oz, x = df$mht) 
 plot(y = df$bwt.oz, x = df$mpregwt) 
@@ -247,7 +247,6 @@ plot(y = df$bwt.oz, x = df$inc)
 
 
 ```{r echo = FALSE, include=FALSE}
-
 boxplot(bwt.oz~smoke,  data=df)
 boxplot(bwt.oz~med,  data=df)
 boxplot(bwt.oz~mrace,  data=df)
@@ -392,7 +391,10 @@ ggplot(df,aes(x=mpregwt, y=bwt.oz)) +
 #
 #Model_both_bic <- step(model_null, scope = formula(raw_full),direction="both",trace=0, k = #log(n))
 
-final_model = lm(formula = bwt.oz ~ smoke + mht + mrace + mpregwt + parity, data = df)
+#final_model = lm(formula = bwt.oz ~ smoke + mht + mrace + mpregwt + parity, data = df)
+
+final_model = lm(formula = bwt.oz ~ smoke + mht + mrace + mpregwt + parity_sqrt, data = df)
+
 
 # TO Answer :2
 #What is a likely range for the difference in birth weights for smokers and non-smokers?
@@ -414,7 +416,7 @@ ggplot(df,aes(x=smoke, y=bwt.oz, fill=smoke)) +
 
 ## Summary
 
-A linear regression model was built to query the relationship between maternal smoking and the baby's birth weight IN this investigation and some related questions. The model indicates a strong relationship between maternal smoking with a baby's birth weight. By controlling other factors, the mother's smoke would decrease the baby's birth weight by 9.35 oz on average.
+A linear regression model was built to query the relationship between maternal smoking and the baby's birth weight IN this investigation and some related questions. The model indicates a strong relationship between maternal smoking with a baby's birth weight. By controlling other factors, the mother's smoke would decrease the baby's birth weight.
 
 \hfill\break
 
@@ -556,7 +558,7 @@ According to the exploratory data analysis (EDA) plot, only some predict variabl
 The final modle is :
 
 $$
-  bwt.oz = \beta_{1}*smoke_{i} + \beta_{2}*mht_{i} + \beta_{3}*mrace_{i} + \beta_{4}*mpregwt_{i} + \beta_{5}*parity_{i} + \beta_{0} + \varepsilon_{i}
+  bwt.oz = \beta_{1}*smoke_{i} + \beta_{2}*mht_{i} + \beta_{3}*mrace_{i} + \beta_{4}*mpregwt_{i} + \beta_{5}*sqrt(parity)_{i} + \beta_{0} + \varepsilon_{i}
 $$
 
 ```{r echo = FALSE, results='asis'}
@@ -622,9 +624,9 @@ plot(final_model, which = 4, col=c("blue4"))
 
 According to abvoe verification, the valitiy of the model can be confirmed. Moreover, several conclusion can be deduced from model:
 
-- The smoke behavior can significantly decrease birth weight. 95% CI is (confint(final_model)[2,1], confint(final_model)[2,2])
+- The smoking behavior can significantly decrease birth weight by 9.4 oz on average. 95% CI is : `r c(confint(final_model)[2,1], confint(final_model)[2,2]) `
 
-- For some races, smoking could bring down birth weight more significantly than other races. 
+- A model with interaction items between `smoke` and `mrace` was built to check whether smoking performs differently according to mothers' race. The result is that the mother's race will not affect the association between smoking and birth weight by the mother's race.
 
 -  Apart from smoking, 'mht', 'parity', and 'mpregwt' also significantly influence birth weights in statistics but slightly in science. Some races (black, Asian) have evidence negative influence on birth weights while other rances have no such influence.  
 
@@ -641,7 +643,7 @@ From the analysis, a multi-linear regression model was built to identify the rel
 **Deficiency**
 
 
-1. The final model's R-Square value is only 0.15, which means the model cannot explain the response value well.
+1. The final model's R-Square value is only 0.155.
 
 2. There are some outliers in the model. Even though some index indicates that these outliers are unimportant, further investigation is needed. 
 
