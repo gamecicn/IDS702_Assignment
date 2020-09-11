@@ -1,0 +1,34 @@
+---
+title: "Assignment 3"
+author: "Maobin Guo"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    df_print: paged
+    
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+
+options(warn=-1)
+options(xtable.comment = FALSE)
+
+
+library(ggplot2)
+library(xtable)
+library(rms)
+
+
+```
+
+
+# Question1 
+
+```{r echo = FALSE}
+
+rm(list = ls())
+
+
+```
+
