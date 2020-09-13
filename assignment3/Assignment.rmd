@@ -232,13 +232,23 @@ chi <- chisq.test(table(df[,c("Premature_fac","smoke")]))
 
 ```{r echo = FALSE , include=FALSE}
 
-pre_modle1 <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med +  mhtCent:smoke , data = df, family = binomial)
+raw_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med , data = df, family = binomial)
 
-summary(pre_modle1)
 
-res1 <- residuals(pre_modle1,"resp")
+null_model <- glm(Premature_fac ~1 , data = df, family = binomial)
 
-binnedplot(x=fitted(pre_modle1),y=res1,xlab="Pred. probabilities",
+
+full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med + smoke:med + smoke +mrace, data = df, family = binomial)
+
+
+model  <- step(full_model, scope = formula(null_model), direction="forward",trace=0)
+
+summary(model)
+ 
+ 
+res1 <- residuals(full_model,"resp")
+
+binnedplot(x=fitted(model),y=res1,xlab="Pred. probabilities",
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
 
 binnedplot(x=df$parityCent,y=res1,xlab="Arsenic centered",
@@ -246,7 +256,6 @@ binnedplot(x=df$parityCent,y=res1,xlab="Arsenic centered",
 
 binnedplot(x=df$mageCent,y=res1,xlab="Arsenic centered",
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
-
 
 binnedplot(x=df$mhtCent,y=res1,xlab="Arsenic centered",
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
@@ -256,7 +265,49 @@ binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
 
 ```
 
+### Model
 
+$$
+
+logit(\pi_{i}) = \beta_{0}
+
+$$
+
+
+
+```{r echo = FALSE , include=FALSE}
+
+full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med + smoke:med + smoke +mrace, data = df, family = binomial)
+
+res1 <- residuals(full_model,"resp")
+
+```
+
+
+```{r echo = FALSE, results='asis'}
+
+xtable(full_model)
+
+```
+
+### Some Residuals's binnedplot 
+
+
+```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
+
+binnedplot(x=fitted(model),y=res1,xlab="Pred. probabilities",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=df$mageCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=df$mhtCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+```
 
 ## Conclusion
 
