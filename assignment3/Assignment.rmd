@@ -265,32 +265,43 @@ binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
 
 ```
 
-### Model
-
-$$
-
-logit(\pi_{i}) = \beta_{0}
-
-$$
-
-
-
 ```{r echo = FALSE , include=FALSE}
 
-full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med + smoke:med + smoke +mrace, data = df, family = binomial)
+full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc  + med  + mrace, data = df, family = binomial)
 
 res1 <- residuals(full_model,"resp")
 
+model_sum <- summary(full_model)
+
 ```
 
+The  modle is :
+
+$$
+logit(\pi_{i}) = \beta_{0} + \beta_{1}*parityC + \beta_{2}*mageC + \beta_{3}*mhtC +\beta_{4}*mpregwtC + \beta_{5}*smoke +\beta_{6}*inc +\beta_{7}*med +\beta_{8}*mrace
+$$
+
+- parityC :  cented parity
+- mageC   :  cented mage
+- mhtC    :  cented mht
+- mpregwtC : cented mpregwtC 
+
+
+### Model performance
 
 ```{r echo = FALSE, results='asis'}
 
-xtable(full_model)
+xtable(model_sum)
 
 ```
 
-### Some Residuals's binnedplot 
+Null deviance : `r round(model_sum$null.deviance,2)`
+
+Residual deviance : `r round(model_sum$deviance,2)`
+
+
+
+### Model diagnostics
 
 
 ```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
@@ -308,6 +319,52 @@ binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
 
 ```
+
+### Model validation
+ 
+###### ROC 
+ 
+
+```{r echo = FALSE, out.height= c('30%'), message=FALSE}
+
+roc <- roc(df$Premature,fitted(full_model),plot=T,print.thres="best",legacy.axes=T, col="blue2")
+
+roc_value <-coords(roc, "best", transpose = FALSE)
+
+```
+
+
+
+**AUC :** `r round(roc$auc, 2)`
+
+**Cut-off :** `r round(roc_value[1], 2)`
+
+
+```{r echo = FALSE, results='asis', include=FALSE}
+
+Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(full_model) >= as.numeric(roc_value[1]), "1","0")), as.factor(df$Premature),positive = "1")
+
+```
+
+
+\hfill\break
+
+##### Confusion Matrix 
+
+\hfill\break
+
+```{r echo = FALSE, results='asis'}
+xtable(Conf_mat$table)
+```
+
+\hfill\break
+
+**Sensitivity :** `r round(Conf_mat$byClass[1], 2)`
+
+**Specificity :** `r round(Conf_mat$byClass[2], 2)`
+
+
+\hfill\break
 
 ## Conclusion
 
