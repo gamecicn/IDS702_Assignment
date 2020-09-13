@@ -20,6 +20,10 @@ library(xtable)
 library(rms)
 library(arm)
 library(pROC)
+library(e1071)
+library(caret)
+library(ggplot2)
+require(gridExtra)
 
 ```
 
@@ -39,7 +43,8 @@ df[df$med <= 7 & df$med >= 6, ]$med = 7
 df$med   <- as.factor(df$med)
 df$mrace <- as.factor(df$mrace)
 df$smoke <- as.factor(df$smoke)
-df$Premature <- as.factor(as.integer(df$Premature))
+df$Premature_fac <- factor(as.integer(df$Premature), levels = c(0, 1), labels = c("pre", "normal"))
+df$Premature <- as.numeric(df$Premature) 
 
 df$parityCent <- df$parity - mean(df$parity)
 df$mageCent <- df$mage - mean(df$mage)
@@ -76,33 +81,35 @@ This analysis based on a dataset from a study carried between 1960 and 1967 at t
 
 ## Data
 
-### Relationship between the response variable and each predictor
+\hfill\break
 
-```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
+### Interaction Explore 
 
+```{r echo = FALSE, include=FALSE} 
+# Hiddend analysis 
 
-ggplot(df,aes(x=Premature, y=parity, fill=Premature)) +
+ggplot(df,aes(x=Premature_fac, y=parity, fill=Premature_fac)) +
   geom_boxplot() + coord_flip() +
   scale_fill_brewer(palette="Reds") +
   labs(title="Mother's parity vs Premature",
        x="Premature",y="Mother's parity") + 
   theme_classic() + theme(legend.position="none")
 
-ggplot(df,aes(x=Premature, y=mage, fill=Premature)) +
+ggplot(df,aes(x=Premature_fac, y=mage, fill=Premature_fac)) +
   geom_boxplot() + coord_flip() +
   scale_fill_brewer(palette="Reds") +
   labs(title="Mother's age vs Premature",
        x="Premature",y="Mother's age") + 
   theme_classic() + theme(legend.position="none")
- 
-ggplot(df,aes(x=Premature, y=mht, fill=Premature)) +
+
+ggplot(df,aes(x=Premature_fac, y=mht, fill=Premature_fac)) +
   geom_boxplot() + coord_flip() +
   scale_fill_brewer(palette="Reds") +
   labs(title="Mother's height vs Premature",
        x="Premature",y="Mother's height") + 
   theme_classic() + theme(legend.position="none")
 
-ggplot(df,aes(x=Premature, y=inc, fill=Premature)) +
+ggplot(df,aes(x=Premature_fac, y=inc, fill=Premature_fac)) +
   geom_boxplot() + coord_flip() +
   scale_fill_brewer(palette="Reds") +
   labs(title="Mother's income vs Premature",
@@ -112,23 +119,142 @@ ggplot(df,aes(x=Premature, y=inc, fill=Premature)) +
 ```
 
 
-```{r echo = FALSE }
-# Explore Premature & factor variables
+```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
 
-chisq.test(table(df[,c("Premature","mrace")]))
+#------------------------------------
 
-chisq.test(table(df[,c("Premature","smoke")]))
+ggplot(df,aes(x=Premature_fac, y=parity, fill=Premature_fac)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's parity vs Premature",
+       x="Premature",y="Mother's parity") + 
+  theme_classic() + theme(legend.position="none") +
+  facet_wrap( ~ smoke)
 
-chisq.test(table(df[,c("Premature","med")]))
 
-df$inc <- as.factor(df$inc)
-chisq.test(table(df[,c("Premature","inc")]))
+ggplot(df,aes(x=Premature_fac, y=mage, fill=Premature_fac)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's age vs Premature",
+       x="Premature",y="Mother's age") + 
+  theme_classic() + theme(legend.position="none") + 
+  facet_wrap( ~ smoke)
 
+ggplot(df,aes(x=Premature_fac, y=mht, fill=Premature_fac)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's height vs Premature",
+       x="Premature",y="Mother's height") + 
+  theme_classic() + theme(legend.position="none") + 
+  facet_wrap( ~ smoke)
 
+ggplot(df,aes(x=Premature_fac, y=inc, fill=Premature_fac)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's height vs Premature",
+       x="Premature",y="Mother's income") + 
+  theme_classic() + theme(legend.position="none") + 
+  facet_wrap( ~ smoke)
 
 ```
 
+- For the above four factors, their behavior on facilitating pre-term birth seems different with smoking and nonsmoking. Further investigation would be implemented in the modeling step. 
+
+
+```{r echo = FALSE, include=FALSE}
+# Hide 
+
+# Explore Premature & factor variables
+
+chisq.test(table(df[,c("Premature_fac","mrace")]))
+
+
+apply(table(df[,c("Premature_fac","smoke")])/sum(table(df[,c("Premature_fac","smoke")])),  2,function(x) x/sum(x)) 
+
+tapply(df$Premature_fac, df$smoke, function(x) table(x)/sum(table(x)))
+chisq.test(table(df[,c("Premature_fac","smoke")]))
+
+chisq.test(table(df[,c("Premature_fac","med")]))
+
+df$inc_fac <- as.factor(df$inc)
+chisq.test(table(df[,c("Premature_fac","inc_fac")]))
+
+```
+
+
+###  Race  
+
+Mother's race and education status have strong association with premature. 
+
+```{r echo = FALSE, results='asis'}
+
+xtable(apply(table(df[,c("Premature_fac","med")])/sum(table(df[,c("Premature_fac","med")])), 2,function(x) x/sum(x)) )
+
+chi <- chisq.test(table(df[,c("Premature_fac","med")]))
+```
+
+- The chisq-test's p-value of mother's education vs prematrue is `r round(chi$p.value, 4)`, which mean there is a strong tie between mother's educational experience and premature rate 
+
+- There is some noticeable difference in the premature rate between mothers with diverse educational backgrounds.  Mothers with college or some college experience are more likely premature than others. 
+
+### Education
+
+```{r echo = FALSE, results='asis'}
+
+xtable(apply(table(df[,c("Premature_fac","mrace")])/sum(table(df[,c("Premature_fac","mrace")])), 2,function(x) x/sum(x)) )
+
+chi <- chisq.test(table(df[,c("Premature_fac","mrace")]))
+```
+
+- The chisq-test's p-value of mother's ramce vs prematrue is `r round(chi$p.value, 4)`, which mean there is a strong associaton between mother's race and premature rate.  
+
+- Comparing with other rame, mix race has a much higher probability of having pre-term birth. 
+
+- Asian mother's premature rate is remarkably lower than mothers of other races. 
+
+
+###  Smoking
+
+```{r echo = FALSE, results='asis'}
+
+xtable(apply(table(df[,c("Premature_fac","smoke")])/sum(table(df[,c("Premature_fac","smoke")])), 2,function(x) x/sum(x)) )
+
+chi <- chisq.test(table(df[,c("Premature_fac","smoke")]))
+
+```
+
+- The chisq-test's p-value of mother's smoking vs. premature is `r round(chi$p.value, 4)`, which mean the association is extremely weak or even not exist
+
+- This is a somewhat unexpected finding; typically, the common sense is that smoking would bring various disadvantages to health. To be confirmed, the result would be investigated in the following steps. 
+
 ## Model
+
+
+```{r echo = FALSE , include=FALSE}
+
+pre_modle1 <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med +  mhtCent:smoke , data = df, family = binomial)
+
+summary(pre_modle1)
+
+res1 <- residuals(pre_modle1,"resp")
+
+binnedplot(x=fitted(pre_modle1),y=res1,xlab="Pred. probabilities",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=df$parityCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=df$mageCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+
+binnedplot(x=df$mhtCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
+           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
+
+```
 
 
 
