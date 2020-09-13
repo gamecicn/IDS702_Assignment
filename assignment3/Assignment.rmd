@@ -18,17 +18,130 @@ options(xtable.comment = FALSE)
 library(ggplot2)
 library(xtable)
 library(rms)
-
+library(arm)
+library(pROC)
 
 ```
 
 
-# Question1 
+```{r echo = FALSE, include=FALSE}
+df <- read.csv("smoking.csv", stringsAsFactors = FALSE, sep = "," ,dec="," )
+
+#Remove gestation
+#df = subset(df, select = -c(date, gestation))
+
+# collapse race categories from 0 - 5 into one category for race = white
+df[df$mrace < 6, ]$mrace = 5
+df[df$med <= 7 & df$med >= 6, ]$med = 7
+
+
+# Factorize 
+df$med   <- as.factor(df$med)
+df$mrace <- as.factor(df$mrace)
+df$smoke <- as.factor(df$smoke)
+df$Premature <- as.factor(as.integer(df$Premature))
+
+df$parityCent <- df$parity - mean(df$parity)
+df$mageCent <- df$mage - mean(df$mage)
+df$mhtCent <- df$mht - mean(df$mht)
+df$mpregwtCent <- df$mpregwt - mean(df$mpregwt)
+
+```
+ 
 
 ```{r echo = FALSE}
+ 
 
-rm(list = ls())
+```
+
+\hfill\break
+
+## Summary
+
+In this investigation, a logistic regression model was built to quest the relationship between smoking and pre-term birth. Other factors would also be analyzed to check whether they could contribute to pre-term birth or change the relationship between smoking and premature delivery.
+
+\hfill\break
+
+## Introduction
+
+This analysis based on a dataset from a study carried between 1960 and 1967 at the Kaiser Foundation Hospital in Oakland, CA. `r nrow(df)` observations were included in the analysis. Logistic regression was exploited as the primary technique to quest the answer to the following questions. 
+
+- Is there any relationship between pre-term birth and mother's smoking? If any, how much the difference of odds ratio of pre-term birth between smoking and nonsmoking mother. 
+
+- Would the mother's race have a significant influence on the correlation?
+
+- Apart from smoking, are there any other factors in the data that would contribute to pre-term birth. 
+
+\hfill\break
+
+## Data
+
+### Relationship between the response variable and each predictor
+
+```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
+
+
+ggplot(df,aes(x=Premature, y=parity, fill=Premature)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's parity vs Premature",
+       x="Premature",y="Mother's parity") + 
+  theme_classic() + theme(legend.position="none")
+
+ggplot(df,aes(x=Premature, y=mage, fill=Premature)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's age vs Premature",
+       x="Premature",y="Mother's age") + 
+  theme_classic() + theme(legend.position="none")
+ 
+ggplot(df,aes(x=Premature, y=mht, fill=Premature)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's height vs Premature",
+       x="Premature",y="Mother's height") + 
+  theme_classic() + theme(legend.position="none")
+
+ggplot(df,aes(x=Premature, y=inc, fill=Premature)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette="Reds") +
+  labs(title="Mother's income vs Premature",
+       x="Premature",y="Mother's income") + 
+  theme_classic() + theme(legend.position="none")
+
+```
+
+
+```{r echo = FALSE }
+# Explore Premature & factor variables
+
+chisq.test(table(df[,c("Premature","mrace")]))
+
+chisq.test(table(df[,c("Premature","smoke")]))
+
+chisq.test(table(df[,c("Premature","med")]))
+
+df$inc <- as.factor(df$inc)
+chisq.test(table(df[,c("Premature","inc")]))
+
 
 
 ```
+
+## Model
+
+
+
+## Conclusion
+
+
+
+
+
+
+
+
+
+
+
 
