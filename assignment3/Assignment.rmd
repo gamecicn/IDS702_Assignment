@@ -43,7 +43,7 @@ df[df$med <= 7 & df$med >= 6, ]$med = 7
 df$med   <- as.factor(df$med)
 df$mrace <- as.factor(df$mrace)
 df$smoke <- as.factor(df$smoke)
-df$Premature_fac <- factor(as.integer(df$Premature), levels = c(0, 1), labels = c("pre", "normal"))
+df$Premature_fac <- factor(as.integer(df$Premature), levels = c(0, 1), labels = c("premature", "normal"))
 df$Premature <- as.numeric(df$Premature) 
 
 df$parityCent <- df$parity - mean(df$parity)
@@ -151,7 +151,7 @@ ggplot(df,aes(x=Premature_fac, y=mht, fill=Premature_fac)) +
 ggplot(df,aes(x=Premature_fac, y=inc, fill=Premature_fac)) +
   geom_boxplot() + coord_flip() +
   scale_fill_brewer(palette="Reds") +
-  labs(title="Mother's height vs Premature",
+  labs(title="Mother's income vs Premature",
        x="Premature",y="Mother's income") + 
   theme_classic() + theme(legend.position="none") + 
   facet_wrap( ~ smoke)
@@ -182,22 +182,33 @@ chisq.test(table(df[,c("Premature_fac","inc_fac")]))
 ```
 
 
-###  Race  
+###  Education  
 
-Mother's race and education status have strong association with premature. 
+After analysis, I decided to aggregate the mother's education from 7 levels to 3 levels: (1) primary (0,1,7), (2) high school(2,3), (3) college(4,5). The transformation based on the following reasons:
+
+- 1. Some levels contain too few data points, such a type_7, which only contains 4 points. 
+- 2. There are apparent differences in the premature rate between the three groups.
+- 3. The new partitions have significant meaning in the model, while the original partitions own little significance. 
+
 
 ```{r echo = FALSE, results='asis'}
 
-xtable(apply(table(df[,c("Premature_fac","med")])/sum(table(df[,c("Premature_fac","med")])), 2,function(x) x/sum(x)) )
+df$med_new <- rep(0, nrow(df))
+df$med_new[df$med == 2| df$med == 3] <-1
+df$med_new[df$med == 4| df$med == 5] <- 2
+df$med_new <- as.factor(df$med_new)
 
-chi <- chisq.test(table(df[,c("Premature_fac","med")]))
+xtable(apply(table(df[,c("Premature_fac","med_new")])/sum(table(df[,c("Premature_fac","med_new")])), 2,function(x) x/sum(x)) )
+
+chi <- chisq.test(table(df[,c("Premature_fac","med_new")]))
+ 
 ```
 
 - The chisq-test's p-value of mother's education vs prematrue is `r round(chi$p.value, 4)`, which mean there is a strong tie between mother's educational experience and premature rate 
 
 - There is some noticeable difference in the premature rate between mothers with diverse educational backgrounds.  Mothers with college or some college experience are more likely premature than others. 
 
-### Education
+### Race
 
 ```{r echo = FALSE, results='asis'}
 
@@ -241,7 +252,12 @@ null_model <- glm(Premature_fac ~1 , data = df, family = binomial)
 full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc + mrace + med + smoke:med + smoke +mrace, data = df, family = binomial)
 
 
-model  <- step(full_model, scope = formula(null_model), direction="forward",trace=0)
+ t1 <- glm(Premature_fac ~ smoke * (parityCent + mageCent + mhtCent + mpregwtCent +mrace) +med + inc, data = df, family = binomial)
+
+ 
+# f1 <- step(null_model,scope=formula(t1), direction="both", trace=0, k = log(nrow(df)))
+
+model  <- step(t1, scope = formula(null_model), direction="both", trace=0)
 
 summary(model)
  
@@ -267,7 +283,11 @@ binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
 
 ```{r echo = FALSE , include=FALSE}
 
-full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc  + med  + mrace, data = df, family = binomial)
+#full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent + smoke + inc  + med  + mrace, data = df, family = binomial)
+
+#full_model <- glm(Premature_fac ~ smoke * mhtCent  + mpregwtCent  + mrace  + med , data = df, family = binomial)
+
+full_model <- glm(Premature_fac ~ smoke * mhtCent  + mpregwtCent  + mrace  + med_new, data = df, family = binomial)
 
 res1 <- residuals(full_model,"resp")
 
@@ -278,13 +298,11 @@ model_sum <- summary(full_model)
 The  modle is :
 
 $$
-logit(\pi_{i}) = \beta_{0} + \beta_{1}*parityC + \beta_{2}*mageC + \beta_{3}*mhtC +\beta_{4}*mpregwtC + \beta_{5}*smoke +\beta_{6}*inc +\beta_{7}*med +\beta_{8}*mrace
+logit(\pi_{i}) = \beta_{0} + \beta_{1}*smoke + \beta_{2}*mhtCent + \beta_{3}*smoke*mhtCent +\beta_{4}*mpregwtCent +\beta_{5}*mrace + \beta_{6}*med\_new
 $$
 
-- parityC :  cented parity
-- mageC   :  cented mage
-- mhtC    :  cented mht
-- mpregwtC : cented mpregwtC 
+- mhtCent     : cented mht
+- mpregwtCent : cented mpregwtC 
 
 
 ### Model performance
@@ -300,25 +318,39 @@ Null deviance : `r round(model_sum$null.deviance,2)`
 Residual deviance : `r round(model_sum$deviance,2)`
 
 
+\hfill\break
+
+**Confidence Interval:**
+
+```{r echo = FALSE, results='asis', message=FALSE}
+
+model_confint <- confint(full_model)
+
+xtable(model_confint)
+
+```
+
 
 ### Model diagnostics
 
 
-```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
+```{r echo = FALSE, out.width=c('33%', '33%', '33%'), fig.show='hold'}
 
-binnedplot(x=fitted(model),y=res1,xlab="Pred. probabilities",
+binnedplot(x=fitted(model),y=res1,xlab="Pred. probabilities", 
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
 
-binnedplot(x=df$mageCent,y=res1,xlab="Arsenic centered",
+binnedplot(x=df$mhtCent,y=res1, xlab="Mother's hight",
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
 
-binnedplot(x=df$mhtCent,y=res1,xlab="Arsenic centered",
-           col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
-
-binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
+binnedplot(x=df$mpregwtCent,y=res1, xlab="Mother's weight",
            col.int="red4",ylab="Avg. residuals",main="Binned residual plot",col.pts="navy")
 
 ```
+
+- According to the binnedplots, most (95%) points reside in the red bend, which is a strong justification for this model's efficiency. However, the points out of the bend tips that there are still some significant factors outside this model. 
+
+- The decrease from null deviance to residual deviance also indicates that the model is valid. 
+
 
 ### Model validation
  
@@ -327,9 +359,11 @@ binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
 
 ```{r echo = FALSE, out.height= c('30%'), message=FALSE}
 
-roc <- roc(df$Premature,fitted(full_model),plot=T,print.thres="best",legacy.axes=T, col="blue2")
+cutoff = 0.18
 
-roc_value <-coords(roc, "best", transpose = FALSE)
+roc <- roc(df$Premature,fitted(full_model),plot=T,print.thres=cutoff,legacy.axes=T, col="blue2")
+
+roc_value <-coords(roc, cutoff, transpose = FALSE)
 
 ```
 
@@ -363,19 +397,38 @@ xtable(Conf_mat$table)
 
 **Specificity :** `r round(Conf_mat$byClass[2], 2)`
 
-
 \hfill\break
 
-## Conclusion
+
+### Summary:
+
+- There is no obvious relationship between pre-term birth and mother's smoking because its slope's p-value is 0.22, and 95% confidence interval contains 0. 
+
+- For a mother with following features, her premature odd range is from `r round(exp(model_confint[1,1]), 2)` to `round(exp(model_confint[1,2]), 2)`. There is no significant difference in odds between smoking and non-smoking mother.
+
+  1. Race is white
+  2. Height is 64 inches
+  3. Pre-pregnancy weight is 128 pound
+  4. The primary level of education. 
+
+- There is no evidence in this model to show that the odds ratio of pre-term birth for smokers and non-smokers differs from the mother's race.
+
+-  Some factors would influence premature significantly:
+
+1. Mother's race.  The race of Mexican would increase the odds by 90% on average, while the race of Asian would increase the odds by 177% on average. 
+
+2. A mother who has college experience would decrease premature odds by 58% on average. 
+
+
+## Conclusion and Deficiency
 
 
 
+**Conclusion**
 
 
 
-
-
-
+**Deficiency**
 
 
 
