@@ -63,7 +63,7 @@ df$mpregwtCent <- df$mpregwt - mean(df$mpregwt)
 
 ## Summary
 
-In this investigation, a logistic regression model was built to quest the relationship between smoking and pre-term birth. Other factors would also be analyzed to check whether they could contribute to pre-term birth or change the relationship between smoking and premature delivery.
+In this investigation, a logistic regression model was built to quest the relationship between smoking and pre-term birth. Other factors would also be analyzed to check whether they could contribute to pre-term birth or change the relationship between smoking and premature.
 
 \hfill\break
 
@@ -71,11 +71,11 @@ In this investigation, a logistic regression model was built to quest the relati
 
 This analysis based on a dataset from a study carried between 1960 and 1967 at the Kaiser Foundation Hospital in Oakland, CA. `r nrow(df)` observations were included in the analysis. Logistic regression was exploited as the primary technique to quest the answer to the following questions. 
 
-- Is there any relationship between pre-term birth and mother's smoking? If any, how much the difference of odds ratio of pre-term birth between smoking and nonsmoking mother. 
+- Is there any relationship between pre-term birth and mother's smoking? If any, how much the difference of odds ratio of pre-term birth between smoking and nonsmoking mother? 
 
 - Would the mother's race have a significant influence on the correlation?
 
-- Apart from smoking, are there any other factors in the data that would contribute to pre-term birth. 
+- Apart from smoking, are there any other factors that would contribute to pre-term birth?
 
 \hfill\break
 
@@ -83,7 +83,7 @@ This analysis based on a dataset from a study carried between 1960 and 1967 at t
 
 \hfill\break
 
-### Interaction Explore 
+### Interaction Explore For Some Continues Variables
 
 ```{r echo = FALSE, include=FALSE} 
 # Hiddend analysis 
@@ -181,10 +181,13 @@ chisq.test(table(df[,c("Premature_fac","inc_fac")]))
 
 ```
 
+###  Parity  
+
+Its distribution is extremely uneven, so transform it with the 'sqrt' function.  
 
 ###  Education  
 
-After analysis, I decided to aggregate the mother's education from 7 levels to 3 levels: (1) primary (0,1,7), (2) high school(2,3), (3) college(4,5). The transformation based on the following reasons:
+After analysis, I decided to aggregate the mother's education from 7 levels to 3 levels: (1) primary [0,1,7], (2) high school[2,3], (3) college[4,5]. The transformation based on the following reasons:
 
 - 1. Some levels contain too few data points, such a type_7, which only contains 4 points. 
 - 2. There are apparent differences in the premature rate between the three groups.
@@ -240,6 +243,20 @@ chi <- chisq.test(table(df[,c("Premature_fac","smoke")]))
 
 ## Model
 
+### Variable Transformation and Selection
+
+##### Transformation
+
+- med : The variable 'med' was transformed to med_new by merging some level. 
+- mht : The variable 'mht' was centered, and the new variable was named 'mhtCent'
+- mpregwt : The variable 'mpregwt' was centered, and the new variable was named 'mpregwtCent'
+- parity: The variable 'parity' was transformed to parity_sqrt by sqrt, because its distribution is not even. 
+
+##### Variable & Model Selection
+
+According to the exploratory data analysis (EDA), only some predict variables
+show an apparent relationship with the response variable. Following EDA, some quantitive analysis methods, such as Chi-test and ANOVA,  were used to decide whether or not to include the variable into the final model. R’s auto-explore function ‘step’ with various metrics (AIC, BIC) and actions (forward, backward, stepwise) are also used to select variables and the final model.
+
 
 ```{r echo = FALSE , include=FALSE}
 
@@ -260,7 +277,6 @@ full_model <- glm(Premature_fac ~ parityCent + mageCent + mhtCent + mpregwtCent 
 model  <- step(t1, scope = formula(null_model), direction="both", trace=0)
 
 summary(model)
- 
  
 res1 <- residuals(full_model,"resp")
 
@@ -287,7 +303,7 @@ binnedplot(x=df$mpregwtCent,y=res1,xlab="Arsenic centered",
 
 #full_model <- glm(Premature_fac ~ smoke * mhtCent  + mpregwtCent  + mrace  + med , data = df, family = binomial)
 
-full_model <- glm(Premature_fac ~ smoke * mhtCent  + mpregwtCent  + mrace  + med_new, data = df, family = binomial)
+full_model <- glm(Premature_fac ~ smoke * mhtCent  + mpregwtCent  + smoke * mrace  + med_new, data = df, family = binomial)
 
 res1 <- residuals(full_model,"resp")
 
@@ -298,13 +314,10 @@ model_sum <- summary(full_model)
 The  modle is :
 
 $$
-logit(\pi_{i}) = \beta_{0} + \beta_{1}*smoke + \beta_{2}*mhtCent + \beta_{3}*smoke*mhtCent +\beta_{4}*mpregwtCent +\beta_{5}*mrace + \beta_{6}*med\_new
+logit(\pi_{i}) = \beta_{0} + \beta_{1}*smoke + \beta_{2}*mhtCent + \beta_{3}*smoke*mhtCent +\beta_{4}*mpregwtCent +\beta_{5}*mrace + \beta_{6}*med + \beta_{7}*smoke*mrace
 $$
 
-- mhtCent     : cented mht
-- mpregwtCent : cented mpregwtC 
-
-
+ 
 ### Model performance
 
 ```{r echo = FALSE, results='asis'}
@@ -317,8 +330,6 @@ Null deviance : `r round(model_sum$null.deviance,2)`
 
 Residual deviance : `r round(model_sum$deviance,2)`
 
-
-\hfill\break
 
 **Confidence Interval:**
 
@@ -380,9 +391,6 @@ Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(full_model) >= as.numeric(ro
 
 ```
 
-
-\hfill\break
-
 ##### Confusion Matrix 
 
 \hfill\break
@@ -419,9 +427,9 @@ xtable(Conf_mat$table)
 
 **Are there other interesting associations with the odds of pre-term birth that are worth mentioning?**
 
-- Mother's race.  The race of Mexican would increase the odds by 90% on average, while the race of Asian would increase the odds by 177% on average. 
+- About mother's race.  The 7th race would increase the odds by 148% on average, while the 8th race may increase the odds by 178% on average. 
 
-- A mother who has college experience would decrease premature odds by 58% on average. 
+- A mother who has college experience would decrease premature odds by 58% on average, while high school experience would decrease it by 36%. It seems that premature risk would decline for a more educated mother.
 
 
 ## Conclusion and Deficiency
