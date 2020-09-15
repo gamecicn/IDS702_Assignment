@@ -391,8 +391,6 @@ Conf_mat <- confusionMatrix(as.factor(ifelse(fitted(full_model) >= as.numeric(ro
 xtable(Conf_mat$table)
 ```
 
-\hfill\break
-
 **Sensitivity :** `r round(Conf_mat$byClass[1], 2)`
 
 **Specificity :** `r round(Conf_mat$byClass[2], 2)`
@@ -407,7 +405,7 @@ xtable(Conf_mat$table)
 
 - There is no obvious relationship between pre-term birth and mother's smoking because its slope's p-value is 0.22, and 95% confidence interval contains 0. 
 
-- For a mother with following features, her premature odd range is from `r round(exp(model_confint[1,1]), 2)` to `round(exp(model_confint[1,2]), 2)`. There is no significant difference in odds between smoking and non-smoking mother.
+- For a mother with following features, her premature odd range is from `r round(exp(model_confint[1,1]), 2)` to `r round(exp(model_confint[1,2]), 2)`. There is no significant difference in odds between smoking and non-smoking mother.
 
   1. Race is white
   2. Height is 64 inches
