@@ -5,8 +5,8 @@ output:
   pdf_document: default
   word_document: default
   html_document:
-    df_print: paged
     
+    df_print: paged
 ---
 
 ```{r setup, echo = FALSE, include=FALSE}
@@ -428,13 +428,42 @@ xtable(Conf_mat$table)
 
 ## Conclusion and Deficiency
 
-
-
 **Conclusion**
 
-
+In the analysis, a logistic regression model was built to identify the relationship between maternal smoking and pre-term birth. The final model shows there is no convincing evidence for this relationship. However, some other factors, such as the mother's education experience and race, show a strong influence on premature. 
 
 **Deficiency**
+
+1. The model's AUC is `r round(roc$auc, 2)` which is not high.
+
+2. The sensitivity and specificity are reletively low. 
+
+3. In the binnedplot, there are still some data points are outside red bend. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
