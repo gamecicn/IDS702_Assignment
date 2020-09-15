@@ -400,7 +400,10 @@ xtable(Conf_mat$table)
 \hfill\break
 
 
-### Summary:
+### Answers for proposed question:
+
+
+**1. Do mothers who smoke tend to have higher chances of pre-term birth than mothers who do not smoke? What is a likely range for the odds ratio of pre-term birth for smokers and non-smokers?**
 
 - There is no obvious relationship between pre-term birth and mother's smoking because its slope's p-value is 0.22, and 95% confidence interval contains 0. 
 
@@ -410,14 +413,17 @@ xtable(Conf_mat$table)
   2. Height is 64 inches
   3. Pre-pregnancy weight is 128 pound
   4. The primary level of education. 
+  
+**Is there any evidence that the odds ratio of pre-term birth for smokers and non-smokers differs by mother’s race? If so, characterize those differences.**  
 
 - There is no evidence in this model to show that the odds ratio of pre-term birth for smokers and non-smokers differs from the mother's race.
 
--  Some factors would influence premature significantly:
 
-1. Mother's race.  The race of Mexican would increase the odds by 90% on average, while the race of Asian would increase the odds by 177% on average. 
+**Are there other interesting associations with the odds of pre-term birth that are worth mentioning?**
 
-2. A mother who has college experience would decrease premature odds by 58% on average. 
+- Mother's race.  The race of Mexican would increase the odds by 90% on average, while the race of Asian would increase the odds by 177% on average. 
+
+- A mother who has college experience would decrease premature odds by 58% on average. 
 
 
 ## Conclusion and Deficiency
