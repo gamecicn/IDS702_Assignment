@@ -467,14 +467,16 @@ The dataset includes `r nrow(df)` observations. Since it was already cleaned, th
 
 ```{r echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
 
-plot(y = df$bwt.oz, x = sqrt(df$parity), main = "Fig. 1") 
-plot(y = df$bwt.oz, x = df$mage, main = "Fig. 2") 
-plot(y = df$bwt.oz, x = df$mht, main = "Fig. 3") 
-plot(y = df$bwt.oz, x = df$mpregwt, main = "Fig. 4") 
-plot(y = df$bwt.oz, x = sqrt(df$inc), main = "Fig. 5") 
-boxplot(bwt.oz~smoke,  data=df, main = "Fig. 6")
-boxplot(bwt.oz~med,  data=df, main = "Fig. 7")
-boxplot(bwt.oz~mrace,  data=df, main = "Fig. 8")
+plot(y = df$Premature, x = sqrt(df$parity), main = "Fig. 1") 
+plot(y = df$Premature, x = df$mage, main = "Fig. 2") 
+plot(y = df$Premature, x = df$mht, main = "Fig. 3") 
+plot(y = df$Premature, x = df$mpregwt, main = "Fig. 4") 
+plot(y = df$Premature, x = sqrt(df$inc), main = "Fig. 5") 
+
+
+boxplot(Premature~smoke,  data=df, main = "Fig. 1")
+boxplot(Premature~med,    data=df, main = "Fig. 2")
+boxplot(Premature~mrace,  data=df, main = "Fig. 3")
 
 ```
 
