@@ -1,0 +1,399 @@
+---
+title: "Team Project 1 - EDA"
+author: "Maobin Guo"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    
+    df_print: paged
+---
+  
+```{r start, echo = FALSE, include=FALSE }
+
+options(warn=-1)
+options(xtable.comment = FALSE)
+
+
+library(ggplot2)
+library(xtable)
+library(rms)
+library(arm)
+library(pROC)
+#library(e1071)
+#library(caret)
+#library(ggplot2)
+#require(gridExtra)
+library(dplyr)
+library(reshape2)
+library(ggalluvial)
+```
+
+
+```{r load,  echo = FALSE, include=FALSE}
+
+###### Load the data
+df <- read.csv("lalondedata.csv",header=T)
+
+str(df)
+summary(df)
+
+#############################
+# Type transform 
+
+for (fac_var in c('black', 'hispan', 'married', 'nodegree', 'treat') ) {
+  df[,fac_var] <- as.factor(as.character(df[,fac_var]))
+}
+
+df$job78 <- rep(0, nrow(df))
+df$job78[df$re78 > 0 ] = 1  
+df$job78 <- as.factor(df$job78)
+levels(df$job78) <- c("unemployed", "employed")
+
+
+df$job74 <- rep(0, nrow(df))
+df$job74[df$re74 > 0 ] = 1  
+df$job74 <- as.factor(df$job74)
+levels(df$job74) <- c("unemployed", "employed")
+```
+
+## Variables 
+
+
+#### 'black', 'hispan', 'married', 'nodegree'
+
+```{r ,  echo = FALSE}
+
+for (fac_var in c('black', 'hispan', 'married', 'nodegree', 'treat') ) {
+  print(paste("Frequent of :", fac_var))
+  
+  print(table(df[fac_var]))
+}
+
+```
+
+### Educ 
+
+####  Educ overview
+```{r ,  echo = FALSE}
+hist(as.numeric(df$educ))
+```
+
+
+
+### Age 
+
+####  Age overview
+```{r ,  echo = FALSE}
+hist(as.numeric(df$age))
+```
+
+
+####  Categorize age  
+ 
+Categorize age to 3 group 
+
+- [1] 15-24 : Those just entering the labour market following education
+- [2] 25-54 : Those in their prime working lives
+- [3] 55-64 : Passing the peak of their career and approaching retirement
+
+Since the expeirment only take 2 years, year shifting was not consideding here. 
+
+[Refere](https://data.oecd.org/emp/employment-rate-by-age-group.htm)
+
+```{r ,  echo = FALSE}
+
+df$age_fac <- rep(0, nrow(df))
+df$age_fac[df$age >= 25 & df$age < 55] <- 1
+df$age_fac[df$age >= 55] <- 2
+
+df$age_fac <- factor(df$age_fac)
+levels(df$age_fac) <- c("Rookie", "Prime", "Aged")
+
+table(df$age_fac)
+```
+
+### Pivot views
+
+#### Received treat conditions across differtn variable
+
+```{r ,  echo = FALSE}
+df %>% 
+group_by(age_fac) %>% 
+summarize(treatNum = sum(treat==1), total=n(), rate = round(100 * sum(treat==1)/n(),2))
+```
+**Insight**
+Almost even in different working age group. 
+
+
+```{r ,  echo = FALSE}
+df %>% 
+group_by(black) %>% 
+summarize(treatNum = sum(treat==1), total=n(), rate = round(100 * sum(treat==1)/n(),2))
+```
+**Insight**
+Black's treat rate is far more higher than unmarried. 
+
+
+
+```{r ,  echo = FALSE}
+df %>% 
+group_by(hispan) %>% 
+summarize(treatNum = sum(treat==1), total=n(), rate = round(100 * sum(treat==1)/n(),2))
+```
+**Insight**
+Hispan's treat rate is lower than other race. 
+
+
+```{r ,  echo = FALSE}
+df %>% 
+group_by(married) %>% 
+summarize(treatNum = sum(treat==1),  total=n(), rate = round(100 * sum(treat==1)/n(),2))
+```
+
+**Insight**
+Married people's treat rate is far more lower than unmarried. 
+
+```{r ,  echo = FALSE}
+df %>% 
+group_by(nodegree) %>% 
+summarize(treatNum = sum(treat==1),  total=n(), rate = round(100 * sum(treat==1)/n(),2))
+```
+**Insight**
+No degree group treat rate is higher. 
+
+
+```{r ,  echo = FALSE}
+ggplot(data = df,
+       aes(axis1 = job74, axis2 = treat, axis3 = job78)) +
+  scale_x_discrete(limits = c("job74", "treat", "job78"), expand = c(.01, .05)) +
+  geom_alluvium(aes(fill = job74)) +
+  geom_stratum() + geom_text(stat = "stratum", aes(label = after_stat(stratum)))
+
+```
+
+
+```{r ,  echo = FALSE}
+
+df %>%
+group_by(job74, treat, job78) %>%
+summarize(treatNum = n())
+
+```
+
+-  For Unemployed people in 74:
+  - Treated    : 131  
+    - Employed   in 78 : 100  (76.3%)
+    - Unemployed in 78 : 31    (23%)
+  - No treated : 112 
+    - Employed   in 78 : 75    (67%)
+    - Unemployed in 78 : 37    (33%)
+
+
+-  For Employed people in 74:
+  - Treated    : 54  
+    - Employed   in 78 : 40    (74%)
+    - Unemployed in 78 : 14    (26%)
+  - No treated : 317 
+    - Employed   in 78 : 256    (80%)
+    - Unemployed in 78 : 61     (19.2%)
+
+
+**Insight**
+
+-  For umemployed people in 74,  treat seems improve employed rate (67% -> 76%)
+-  For umemployed people in 74,  treat seems bring down employed rate (80% ->74%)
+   Maybe the employed people in 74 and not treated people are people no need to take treat.
+   
+   
+##### Only consider treat :
+
+```{r ,  echo = FALSE}
+
+df %>%
+group_by(treat, job78) %>%
+summarize(treatNum = n())
+
+```
+
+- For treated : 
+  - unemployed :  45   (0.24)
+  - employed :    140  (0.76)
+
+- For untreated : 
+  - unemployed :  98   (0.228)
+  - employed :    331  (0.77)
+  
+**Insight**
+
+If only take treated as a variable, it's hard to compare. 
+
+
+
+   
+```{r ,  echo = FALSE, out.width=c('25%', '25%', '25%', '25%'), fig.show='hold'}
+
+df %>%
+group_by(job74, treat, nodegree) %>%
+summarize(treatNum = n())
+
+ggplot(df, aes(x = re74, y = re78)) +
+      geom_point(alpha = .5,colour="blue4") +
+      geom_smooth(method="loess",col="red3")  
+
+# exclude 2 outliers 
+ggplot(df[ (df$re78 != max(df$re78)) & (df$re74 != max(df$re74)), ], 
+      aes(x = re74, y = re78)) +
+      geom_point(alpha = .5,colour="blue4") +
+      geom_smooth(method="loess",col="red3")
+
+
+ggplot(df, aes(x = educ, y = re78)) +
+      geom_point(alpha = .5,colour="blue4") +
+      geom_smooth(method="loess",col="red3")  
+
+
+ggplot(df, aes(x = treat, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & treat")
+
+ggplot(df, aes(x = black, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & black")
+
+
+ggplot(df, aes(x = hispan, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & hispan")
+
+
+ggplot(df, aes(x = married, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & married")
+
+ggplot(df, aes(x = nodegree, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & nodegree")
+
+
+ggplot(df, aes(x = age_fac, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & age_fac")
+
+```
+
+
+```{r ,  echo = FALSE}
+
+ggplot(df, aes(x = treat, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & treat ON black") +
+  facet_wrap( ~ black,ncol=2)
+```
+** Insight **
+- For balck people, treat is useful
+
+
+```{r ,  echo = FALSE}
+
+ggplot(df, aes(x = treat, y = re78, fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & treat ON hispan") +
+  facet_wrap( ~ hispan, ncol=2)
+```
+** Insight **
+- No interaction
+- Treat bring down re78
+
+
+
+```{r ,  echo = FALSE}
+
+ggplot(df, aes(x = treat, y = re78, fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & treat ON married") +
+  facet_wrap( ~ married, ncol=2)
+```
+** Insight **
+- No interaction
+ 
+```{r ,  echo = FALSE}
+
+ggplot(df, aes(x = treat, y = re78, fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & treat ON nodegree") +
+  facet_wrap( ~ nodegree, ncol=2)
+```
+** Insight **
+- No interaction
+ 
+
+```{r ,  echo = FALSE}
+ggplot(df, aes(x = age_fac, y = re78,fill=re78)) +
+  geom_boxplot() +
+  labs(title="re78 & age_fac") +
+  facet_wrap( ~ nodegree, ncol=3)
+```
+** Insight **
+- With interaction
+- Treat will bring down the advantage of primary work. Maybe for low salary job, primay age's experience can be got from training. 
+
+
+
+```{r ,  echo = FALSE, include=FALSE}
+
+df$re74_sqr <- df$re74^2
+
+model_raw <- lm(re78~treat+age_fac+educ+black+hispan+married+nodegree+re74 ,data=df)
+
+model_raw2 <- lm(re78~treat+age_fac+educ+black+hispan+married+nodegree+re74+re74_sqr ,data=df)
+
+
+#===============
+model_raw3 <- lm(re78~treat * (black+re74+re74_sqr) + educ + hispan + married + nodegree +age_fac ,data=df)
+summary(model_raw3)
+
+
+model_new <- lm(re78~ treat * (re74 + re74_sqr) + black  + educ + hispan + married + nodegree + age_fac ,data=df)
+summary(model_new)
+
+anova(model_raw3, model_new)
+
+
+#Auto 
+
+model_null <- lm(re78~1, data=df)
+
+model_aic_stepwise  <- step(model_raw3, scope = formula(model_null), direction="both", trace=0)
+summary(model_aic_stepwise)
+
+model_bic_stepwise <- step(model_null, scope=formula(model_raw3), direction="both", trace=0, k = log(nrow(df)))
+summary(model_bic_stepwise)
+
+
+model_forward_aic <- step(model_null, scope = formula(model_raw3),direction="forward", trace=0)
+summary(model_forward_aic)
+
+model_forward_bic <- step(model_null, scope = formula(model_raw3),direction="forward", trace=0,  k = log(nrow(df)))
+summary(model_forward_bic)
+
+model_back_aic <- step(model_null, scope = formula(model_raw2),direction="backward", trace=0)
+summary(model_forward_aic)
+
+model_back_bic <- step(model_null, scope = formula(model_raw2),direction="backward", trace=0,  k = log(nrow(df)))
+summary(model_forward_bic)
+
+```
+
+## Recommand modle
+
+```{r ,  echo = TRUE}
+
+model_recomand <- lm(formula = re78 ~ treat + black + re74 + re74_sqr + educ + age_fac + treat:re74, data = df)
+summary(model_recomand)
+
+```
+
+ 
+
+
