@@ -162,8 +162,11 @@ ggplot(lalondedata, aes(x = age, y = diff)) +
 
 ### Model selection
 
-1. 
+1. We find some signs of interaction between "treat" and "age" in EDA. The business was confirmed in our model. Its p-value is significantly small than 0.05. 
 
+2. Interaction between "married" and "age" was found in this step. It's p-Value is slightly above 0.05, but it small than 0.1. The ANOVA test also indicates that it would improve our model significantly. Hence it was preserved in our final model. 
+
+3. The education was not linear in the plot of EDA, and this finding was also confirmed. Its square transformation was significant (p-value: 0.03).  
 
 ### Final model
 
@@ -270,9 +273,25 @@ xtable(tidy(vif(final_model)))
 
 ## Conclusion
 
+1. Quantify the effect of the treatment, that is, receiving job training, on real annual earnings.
+- Tread has positive effects on worker's annual salary, because its p-value is significant. Controlling other factors, taking the job training would increase $3254 on annual salary on average. It's 95% CI  is (1516, 4991)
+
+2. Is there any evidence that the effects differ by demographic groups?
+- Yes, the effects differs by age. The interaction of treat and age is significant in our model. Work who received training would recieve \$124 per year for per 1 year increase in age, while the no-training worker's salary would decrease by \$322 per year for per 1 year increase in age.
+
+3. Are there other interesting associations with wages that are worth mentioning?
+- Marrage would significantly bring down worker's annual salary by \$1879 (95% CI is 452， 3307)
+- Education duration would increase worker's salary. For 1 unit increase for its square, the annual salary would increase by \$55 (95% CI: 3, 108) 
+
+- Age and married has weak interaction. Controlled other factors, for married worker, order worker would receive more salary. One year increse on age would raise the worker's salary by $137 per year (95% CI: -2, 278)
+
+
 
 ## Deficiency
 
+1. The final model's R-squared is only 0.088 which is relatively low. 
+
+2. Some outliers deserve further investigation. 
 
 
 
