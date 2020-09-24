@@ -275,17 +275,15 @@ xtable(tidy(vif(final_model)))
 
 1. Tread has positive effects on workers' annual salary because its p-value is significant. Controlling other factors, taking job training would increase $3254 on annual salary on average. It's 95% CI  is (1516, 4991)
 
-2. Is there any evidence that the effects differ by demographic groups?
-- Yes, the effects vary by age. The interaction of treat and age is significant in our model. Workers who received training would receive \$124 per year for per 1-year increase in age, while the no-training workers' salary would decrease by \$322 per year for per 1-year increase in age.
+2. The effect varies by age. The interaction of treat and age is significant in our model. Workers who received training would receive $124 per year for per 1-year increase in age, while the no-training workers' salary would decrease by $322 per year for per 1-year increase in age.
 
-3. Other interesting associations with wages :
+3. Other interesting associations with wages:
 
-- Marriage would significantly bring down workers' annual salary by \$1879 (95% CI is 452， 3307)
+- Marriage would significantly bring down workers' annual salary by $1879 (95% CI is 452, 3307)
 
-- Education duration would increase workers' salaries. For 1 unit increase for its square, the annual salary would increase by \$55 (95% CI: 3, 108) 
+- Education duration would increase workers' salaries. For 1 unit increase for its square, the annual salary would increase by $55 (95% CI: 3, 108) 
 
 - Age and married have weak interaction. Controlled other factors, for the married workers, while the old ones would receive more salary. One year increase on age would raise the workers' salary by $137 per year (95% CI: -2, 278)
-
 
 
 ## Deficiency
