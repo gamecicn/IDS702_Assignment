@@ -78,11 +78,11 @@ In this investigation, a linear regression model was built to quest whether or n
 
 In the 1970s, researchers in the United States ran several randomized experiments to evaluate public policy programs. One of the most famous experiments is the National Supported Work (NSW) Demonstration, in which researchers wanted to assess whether or not job training for disadvantaged workers had an effect on their wages. This analysis is base on a subset of the investigation. We try to answer the following question with a linear regression model based on such data. 
 
-- Weather the job training did increase the worker's annual salary. If so, how many salary was increased by the training. 
+- Weather the job training did increase the workers' annual salary. If so, how many salary was increased by the training. 
 
 - Did the effect of job training variy by other factors. 
 
-- Aside from the training, is there any other factors would influence the worker salaery ?
+- Aside from the training, is there any other factors would influence the workers' salaery ?
  
 
 ## DATA & EDA 
@@ -273,23 +273,24 @@ xtable(tidy(vif(final_model)))
 
 ## Conclusion
 
-1. Quantify the effect of the treatment, that is, receiving job training, on real annual earnings.
-- Tread has positive effects on worker's annual salary, because its p-value is significant. Controlling other factors, taking the job training would increase $3254 on annual salary on average. It's 95% CI  is (1516, 4991)
+1. Tread has positive effects on workers' annual salary because its p-value is significant. Controlling other factors, taking job training would increase $3254 on annual salary on average. It's 95% CI  is (1516, 4991)
 
 2. Is there any evidence that the effects differ by demographic groups?
-- Yes, the effects differs by age. The interaction of treat and age is significant in our model. Work who received training would recieve \$124 per year for per 1 year increase in age, while the no-training worker's salary would decrease by \$322 per year for per 1 year increase in age.
+- Yes, the effects vary by age. The interaction of treat and age is significant in our model. Workers who received training would receive \$124 per year for per 1-year increase in age, while the no-training workers' salary would decrease by \$322 per year for per 1-year increase in age.
 
-3. Are there other interesting associations with wages that are worth mentioning?
-- Marrage would significantly bring down worker's annual salary by \$1879 (95% CI is 452， 3307)
-- Education duration would increase worker's salary. For 1 unit increase for its square, the annual salary would increase by \$55 (95% CI: 3, 108) 
+3. Other interesting associations with wages :
 
-- Age and married has weak interaction. Controlled other factors, for married worker, order worker would receive more salary. One year increse on age would raise the worker's salary by $137 per year (95% CI: -2, 278)
+- Marriage would significantly bring down workers' annual salary by \$1879 (95% CI is 452， 3307)
+
+- Education duration would increase workers' salaries. For 1 unit increase for its square, the annual salary would increase by \$55 (95% CI: 3, 108) 
+
+- Age and married have weak interaction. Controlled other factors, for the married workers, while the old ones would receive more salary. One year increase on age would raise the workers' salary by $137 per year (95% CI: -2, 278)
 
 
 
 ## Deficiency
 
-1. The final model's R-squared is only 0.088 which is relatively low. 
+1. The final model's R-squared is only 0.088, which is relatively low. 
 
 2. Some outliers deserve further investigation. 
 
