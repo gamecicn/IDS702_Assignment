@@ -21,7 +21,7 @@ rm(list = ls())
 options(warn=-1)
 options(xtable.comment = FALSE)
 
-
+library(broom) 
 library(ggplot2)
 library(xtable)
 library(rms)
@@ -65,6 +65,7 @@ lalondedata$educc2 <- lalondedata$educc ^ 2
 
 ```
 
+# Part I
 
 ## Summary
 
@@ -172,7 +173,7 @@ ggplot(lalondedata, aes(x = age, y = diff)) +
 
 $$
 \begin{aligned}
-logit(\pi_{i}) = &\beta_{0} + \beta_{1}*black + \beta_{2}*hispan + \beta_{3}*agec + \\ 
+diff = &\beta_{0} + \beta_{1}*black + \beta_{2}*hispan + \beta_{3}*agec + \\ 
                  &\beta_{4}*married + \beta_{5}*treat:agec + \beta_{6}*educc + \\
                  &\beta_{7}*educc^2 + \beta_{8}agec:married
 \end{aligned}
@@ -203,8 +204,8 @@ model_pvalue <- pf(fsta[1],fsta[2],fsta[3],lower.tail=F)
 xtable(final_model, caption = "Coefficients")
 
 tdf <- data.frame(
-    RSquare = formatC(model_pvalue, format = "e", digits = 2),
-    pValue = c(round(summary(final_model)$r.squared, 2))
+    pValue = formatC(model_pvalue, format = "e", digits = 2),
+    RSquare = c(round(summary(final_model)$r.squared, 2))
 )
 
 xtable(tdf, caption = "Evaluationl")
@@ -263,7 +264,7 @@ There are some outliers and high leverage points; however, there are not high in
 
 \hfill\break
 ```{r echo = FALSE, results='asis', message=FALSE, hold_position=TRUE}
-library(broom) 
+
 
 xtable(tidy(vif(final_model)))
 
@@ -291,6 +292,226 @@ xtable(tidy(vif(final_model)))
 1. The final model's R-squared is only 0.088, which is relatively low. 
 
 2. Some outliers deserve further investigation. 
+
+
+\newpage
+
+# Part II
+
+## Summary
+
+
+
+## Introduction
+
+## DATA & EDA
+
+```{r, echo=FALSE, message=FALSE}
+
+rm(list = ls())
+
+lalondedata <-
+  read.table(
+    "lalondedata.csv",
+    header = TRUE,
+    sep = ",",
+    colClasses = c(
+      "factor",
+      "factor",
+      "numeric",
+      "numeric",
+      "factor",
+      "factor",
+      "factor",
+      "factor",
+      "numeric",
+      "numeric",
+      "numeric"
+    )
+  )
+
+lalondedata$earn <- ifelse(lalondedata$re78 > 0, 1, 0)
+
+lalondedata$earnf <-
+  factor(
+    ifelse(lalondedata$re78 > 0, 1, 0),
+    levels = c(0, 1),
+    labels = c("Zero", "Positive")
+  )
+
+
+lalondedata$agec <- lalondedata$age - mean(lalondedata$age)
+lalondedata$educc <- lalondedata$educ - mean(lalondedata$educ)
+lalondedata$agec2 <- lalondedata$agec ^ 2
+
+```
+
+
+###  Response Variable
+
+
+
+### Predict Vraibles
+
+
+
+### Multicollinearity
+
+
+### Interactions
+
+
+## Model
+
+
+### Model selection
+
+### Final model
+
+
+$$
+\begin{aligned}
+logit(\pi_{i}) = &\beta_{0} + \beta_{1}*treat + \beta_{2}*black + \beta_{3}*hispan + \\                                     &\beta_{4}*agec + \beta_{5}*agec^2 + \beta_{6}*nodegree + \beta_{7}*married + \\
+                 &\beta_{8}*agec:treat + beta_{9}*black:treat +\\
+                 &\beta_{10}*hispan:treat + \beta_{11}*hispan:married
+\end{aligned}
+$$
+
+```{r, echo=FALSE, message=FALSE}
+
+full_model <-
+  glm(
+    earn ~ treat * (black + hispan + agec) + agec2 + nodegree + married + agec:nodegree + hispan:married,
+    data = lalondedata,
+    family = binomial
+  )
+
+res1 <- residuals(full_model,"resp")
+
+model_sum <- summary(full_model)
+
+```
+
+
+
+### Model Summary & CI
+
+
+```{r echo = FALSE, results='asis'}
+
+xtable(model_sum, caption = "Coefficients")
+ 
+model_confint <- confint(full_model)
+
+xtable(model_confint, caption = "Confidence Interval")
+
+ 
+tdf <- data.frame(
+    NULL_deviance = round(model_sum$null.deviance,2),
+    Residual_deviance = round(model_sum$deviance,2)
+)
+
+xtable(tdf, caption = "Evaluationl")
+
+```
+
+\hfill\break
+
+
+ 
+### Model Verification
+
+
+#### Residuals
+
+
+#### Outliers and High Leverage
+
+
+#### Collinearity
+
+
+## Conclusion
+
+
+## Deficiency
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
