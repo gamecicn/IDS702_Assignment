@@ -381,23 +381,25 @@ $$
 
 full_model <-
   glm(
-    earn ~ treat * (black + hispan + agec) + agec2 + nodegree + married + agec:nodegree + hispan:married,
+    earn ~ treat * (black + hispan) + agec + agec2 + nodegree + married + agec:nodegree + hispan:married,
     data = lalondedata,
     family = binomial
   )
 
-res1 <- residuals(full_model,"resp")
+
+
+rawresid <- residuals(full_model,"resp")
 
 model_sum <- summary(full_model)
 
 ```
 
-
+\hfill\break
 
 ### Model Summary & CI
 
 
-```{r echo = FALSE, results='asis'}
+```{r echo = FALSE, results='asis', message=FALSE}
 
 xtable(model_sum, caption = "Coefficients")
  
@@ -418,18 +420,96 @@ xtable(tdf, caption = "Evaluationl")
 \hfill\break
 
 
- 
 ### Model Verification
-
 
 #### Residuals
 
+```{r echo = FALSE, results='asis', out.width=c('30%', '30%', '30%'),  out.height='30%'}
+
+binnedplot(
+  x = fitted(full_model),
+  y = rawresid,
+  xlab = "Pred. probabilities",
+  col.int = "red4",
+  ylab = "Avg. residuals",
+  main = "Binned residual plot",
+  col.pts = "navy"
+)
+
+binnedplot(
+  x = lalondedata$agec,
+  y = rawresid,
+  xlab = "Age (Centered)",
+  col.int = "red4",
+  ylab = "Avg. residuals",
+  main = "Binned residual plot",
+  col.pts = "navy"
+)
+
+binnedplot(
+  x = lalondedata$educc,
+  y = rawresid,
+  xlab = "Education (Centered)",
+  col.int = "red4",
+  ylab = "Avg. residuals",
+  main = "Binned residual plot",
+  col.pts = "navy"
+)
+
+```
 
 #### Outliers and High Leverage
 
 
 #### Collinearity
 
+
+### Model Assessment
+
+#### Confusion Matrix
+
+
+```{r echo = FALSE, results='asis', message=FALSE}
+
+Conf_mat <-
+  confusionMatrix(as.factor(ifelse(
+    fitted(full_model) >= mean(lalondedata$earn), "1", "0"
+  )),
+  as.factor(lalondedata$earn), positive = "1")
+
+                
+xtable(Conf_mat$table, caption = "Confusion Matrix")
+
+```
+
+- Sensitivity : `r round(Conf_mat$byClass[c("Sensitivity")], 2)`
+
+- Specificity : `r round(Conf_mat$byClass[c("Specificity")], 2)`
+
+- Accuracy : `r Conf_mat$overall["Accuracy"]`
+
+
+#### ROC
+
+```{r echo = FALSE, results='asis', fig.align='center', message=FALSE,  out.height='30%'}
+
+
+cutoff = "best"
+
+roc <- roc(lalondedata$earn,
+           fitted(full_model),
+           plot=T,
+           print.thres=cutoff,
+           legacy.axes=T, 
+           col="blue2")
+
+roc_value <-coords(roc, cutoff, transpose = FALSE)
+
+```
+
+- AUC: `r round(roc$auc, 2)`
+
+- Cut-off: `r round(roc_value[1], 2)`
 
 ## Conclusion
 
