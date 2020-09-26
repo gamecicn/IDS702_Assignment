@@ -24,8 +24,6 @@ options(xtable.comment = FALSE)
 library(broom) 
 library(ggplot2)
 library(xtable)
-library(knitr)
-library(kableExtra)
 library(rms)
 library(pROC)
 library(e1071)
@@ -33,6 +31,8 @@ library(caret)
 require(gridExtra)
 library(MASS)
 library(arm)
+library(dplyr)
+library(tidyr)
 
 ###### Load the data
 lalondedata <-
@@ -192,9 +192,7 @@ $$
 
 ### Model Summary & CI
 
-\hfill\break
-
-```{r echo = FALSE, results='asis'}
+```{r echo = FALSE, results='asis' ,  fig.show='hold'}
 
 final_model <-
   lm(
@@ -207,8 +205,8 @@ fsta <- summary(final_model)$fstatistic
 model_pvalue <- pf(fsta[1],fsta[2],fsta[3],lower.tail=F)
 ```
 
-```{r echo = FALSE, results='asis'}
-xable(final_model, 
+```{r echo = FALSE, results='asis',  fig.show='hold'}
+xtable(final_model, 
       caption = "Coefficient-Level Estimates")
 
 tdf <- data.frame(
@@ -216,9 +214,10 @@ tdf <- data.frame(
     RSquare = c(round(summary(final_model)$r.squared, 2))
 )
 
-xable(tdf, caption = "Evaluationl")
+xtable(tdf, caption = "Evaluationl")
 
-xable(confint(final_model), caption = "Confidence Interval")
+xtable(confint(final_model), caption = "Confidence Interval")
+
 ```
 
 
@@ -272,9 +271,9 @@ There are some outliers and high leverage points; however, there are not high in
 #### Collinearity 
 
 \hfill\break
-```{r echo = FALSE, results='asis', message=FALSE, hold_position=TRUE}
+```{r echo = FALSE, results='asis', message=FALSE}
 
-xtable(tidy(vif(final_model)))
+xtable(tidy(vif(final_model)), caption = "VIF")
 
 ```
 
@@ -349,24 +348,62 @@ lalondedata$agec2 <- lalondedata$agec ^ 2
 ```
 
 
-###  Response Variable
-
-
-
-### Predict Vraibles
-
-
-
-### Multicollinearity
-
-
 ### Interactions
 
+```{r echo = FALSE, results='asis', out.width=c('50%', '50%'),  out.height='30%'}
+
+ggplot(lalondedata, aes(x = earnf, y = age, fill = earnf)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette = "Reds") +
+  labs(title = "Had salaries or not vs Age by Treat",
+       x = "Had salaries or no?", y = "Age") +
+  theme_classic() + theme(legend.position = "none") +
+  facet_wrap(~ treat)
+
+ggplot(lalondedata, aes(x = earnf, y = age, fill = earnf)) +
+  geom_boxplot() + coord_flip() +
+  scale_fill_brewer(palette = "Reds") +
+  labs(title = "Had salaries or not vs Age by High school degree",
+       x = "Had salaries or no?", y = "Age") +
+  theme_classic() + theme(legend.position = "none") +
+  facet_wrap(~ nodegree)
+
+```
+
+- As reported by the first plots (left), the role of age in the employment rate is different according to whether the works take job training or not. 
+
+- The second plot points out that the role of age in employment rate is also influenced by whether the works have a high school degree or not.
+
+
+```{r echo = FALSE, results='asis', message=FALSE}
+
+hispan0<-lalondedata %>%
+  filter(hispan==0)
+hispan1<-lalondedata %>%
+  filter(hispan==1)
+
+non_hispan_marriage <- apply(table(hispan0[,c("earnf","married")])/sum(table(hispan0[,c("earnf","married")])), 2,function(x) round(x/sum(x), 2))
+hispan_marriage <- apply(table(hispan1[,c("earnf","married")])/sum(table(hispan1[,c("earnf","married")])), 2,function(x) round(x/sum(x),2))
+
+xtable(non_hispan_marriage, caption = "Employed rate with marital status - Non Hispanic")
+xtable(hispan_marriage, caption = "Employed rate with marital status - Hispanic")
+
+```
+
+- The two tables show some differences in the relationship between marital status and employment rate according to race. For the Hispanic works, the single workers' unemployment rate is obviously lower than single workers of other races (8% vs. 26%). At the same time, this advantage disappears in the married Hispanic workers. The married Hispanic workers' unemployment rate is 28%, while Non-Hispanic races' married unemployment rate is 21%. This interesting sign of interaction would be further investigated in the model fitting. 
 
 ## Model
 
-
 ### Model selection
+
+1. By AIC forward-searching, we find a square transform of "age" is significant in the model. After verification with ANOVA test, we decide to keep this transformation in the final model
+
+2. The interactions between "age" and "married" and "degree" were confirmed by the p-value. Even though the p-value is "married" and "treat" not strong significant, the ANOVA test tips it means full. 
+
+3. The interaction between "hispan1" and "married" was confirmed, and its p-value is significant.
+
+4. Tread was not significant in our final model. However, it is a key predictor variable for answering the question. Hence, we preserve it in our final model. 
+
 
 ### Final model
 
@@ -465,7 +502,6 @@ binnedplot(
 
 #### Deviance
 
-
 Null model deviance : `r round(model_sum$null.deviance,2)`
 
 Final model deviance : `r round(model_sum$deviance,2)`
@@ -481,9 +517,10 @@ Final model deviance : `r round(model_sum$deviance,2)`
 
 ```{r echo = FALSE, results='asis', message=FALSE}
 
-xtable(tidy(vif(full_model)))
+xtable(tidy(vif(full_model)), caption = "VIF")
 
 ```
+
 - According to the table, all item's VIF value are below 10.  Hence, there is no remarkable collinearity in this model. 
 
 #### Summary 
@@ -558,10 +595,21 @@ roc_value <-coords(roc, cutoff, transpose = FALSE)
 
 - Data on the long term effect of training is missing in this dataset. Intuitively, job training would exert its influence on people's work in the long run. However, it can not be verified in this analysis. 
 
+\newpage
+# Appendix I (Part1 R Code)
 
 
+````
+`r paste(readLines('Part_1_iris.R'), collapse = '\n')`
+````
 
 
+\newpage
+# Appendix II (Part1 R Code)
+
+````
+`r paste(readLines('Part 2_v2.R'), collapse = '\n')`
+````
 
 
 
