@@ -24,6 +24,8 @@ options(xtable.comment = FALSE)
 library(broom) 
 library(ggplot2)
 library(xtable)
+library(knitr)
+library(kableExtra)
 library(rms)
 library(pROC)
 library(e1071)
@@ -90,7 +92,7 @@ To understand this question we need to quantify the effect of the treatment, tha
 
 These questions would help us understand the potential association of the impact of the training program on the wages. To answer these questions the report uses a linear regression on the differences in wages and a logistic regression model on the odds of getting a non-zero wage after the training. It begins with an EDA of the data, tries building a model by exploring models built with the help of AIC and BIC criteria using forward and stepwise model building and chooses the most suitable model on the basis of accuracy and plausibility to answer the above questions.
 
-## PART I
+# PART I
 
 ## DATA & EDA 
 
@@ -143,11 +145,10 @@ ggplot(lalondedata, aes(x = age, y = diff)) +
 
 ### Multicollinearity
 
-Intuitively, education duration has a strong correlation with a high school degree.  In this dataset, the correlation of the two variables is `r cor(as.numeric(lalondedata$nodegree), lalondedata$educ)` which suggests that we could not include both of them in our model. After evaluation, education duration was preserved since it can provide more information than the high school degree variable.
+Intuitively, education duration has a strong correlation with a high school degree.  In this dataset, the correlation of the two variables is `r round(cor(as.numeric(lalondedata$nodegree), lalondedata$educ), 2)` which suggests that we could not include both of them in our model. After evaluation, education duration was preserved since it can provide more information than the high school degree variable.
 
 
 ### Interactions 
-
 
 
 ```{r, echo=FALSE,  fig.show='hold', out.height='20%', fig.align='center' , message=FALSE}
@@ -162,7 +163,7 @@ ggplot(lalondedata, aes(x = age, y = diff)) +
 
 ```
 
-
+- The annual earnings trend with the increase of age is different according to treat. Further investigation of this interaction would be exerted in the model fitting step.
 
 ## Model
 
@@ -189,13 +190,11 @@ $$
 
 - educc: Centred educ
 
-\hfill\break
-
 ### Model Summary & CI
 
 \hfill\break
 
-```{r echo = FALSE, results='asis', hold_position=TRUE}
+```{r echo = FALSE, results='asis'}
 
 final_model <-
   lm(
@@ -206,19 +205,23 @@ final_model <-
 
 fsta <- summary(final_model)$fstatistic
 model_pvalue <- pf(fsta[1],fsta[2],fsta[3],lower.tail=F)
+```
 
-xtable(final_model, caption = "Coefficients")
+```{r echo = FALSE, results='asis'}
+xable(final_model, 
+      caption = "Coefficient-Level Estimates")
 
 tdf <- data.frame(
     pValue = formatC(model_pvalue, format = "e", digits = 2),
     RSquare = c(round(summary(final_model)$r.squared, 2))
 )
 
-xtable(tdf, caption = "Evaluationl")
+xable(tdf, caption = "Evaluationl")
 
-xtable(confint(final_model), caption = "Confidence Interval")
-
+xable(confint(final_model), caption = "Confidence Interval")
 ```
+
+
 \hfill\break
 
 ### Model Verification 
@@ -270,7 +273,6 @@ There are some outliers and high leverage points; however, there are not high in
 
 \hfill\break
 ```{r echo = FALSE, results='asis', message=FALSE, hold_position=TRUE}
-
 
 xtable(tidy(vif(final_model)))
 
@@ -463,6 +465,7 @@ binnedplot(
 
 #### Deviance
 
+
 Null model deviance : `r round(model_sum$null.deviance,2)`
 
 Final model deviance : `r round(model_sum$deviance,2)`
@@ -549,7 +552,13 @@ roc_value <-coords(roc, cutoff, transpose = FALSE)
 
 ## Deficiency
 
-- 
+- The effect of age is hard to interpret because it involves square transformation and interaction with treat. Moreover, their significants are not strong enough. This would cause the model to become less convincing.
+
+- Sensitivity and accuracy are relatively low. 
+
+- Data on the long term effect of training is missing in this dataset. Intuitively, job training would exert its influence on people's work in the long run. However, it can not be verified in this analysis. 
+
+
 
 
 
