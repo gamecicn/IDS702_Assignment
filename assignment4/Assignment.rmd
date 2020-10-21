@@ -1,0 +1,161 @@
+---
+title: "Assignment 4"
+author: "Maobin Guo"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    
+    df_print: paged
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+
+options(warn=-1)
+options(xtable.comment = FALSE)
+
+library(ggplot2)
+library(xtable)
+library(mice)
+library(VIM)
+
+```
+
+# Part I
+
+```{r echo = FALSE, include=FALSE}
+df <- read.csv("./data/treeage.txt", 
+               stringsAsFactors = FALSE, 
+                strip.white=TRUE)
+
+
+df <- df[, -1]
+
+summary(df)
+str(df)
+miss_data <- df
+
+```
+ 
+## 1. Create missging values
+
+
+```{r echo = FALSE, include=FALSE}
+set.seed(95)
+
+miss_data[head(sample(20), 0.3 * nrow(miss_data)), ]$age <- NA
+
+```
+
+The following code is used to replace 30% age with missing value randomly. 
+```
+missing_data[head(sample(20), 0.3 * nrow(df)), ]$age <- NA
+```
+
+Here is the new dataset withing missing value.
+
+```{r echo = FALSE, results='asis'}
+xtable(miss_data)
+```
+
+## 2. Multiple Imputation  
+
+```{r echo = FALSE, include=FALSE, out.width=c('50%', '50%'), fig.align='center'}
+
+tree_imp <- mice(miss_data,
+                 m=5, 
+                 defaultMethod=c("norm","logreg","polyreg","polr"), 
+                 print=F)
+
+
+marginplot(miss_data[,c("diameter","age")],
+           col=c("lightblue3","darkred"),
+           cex.numbers=1.2,
+           pch=19, 
+           main = "marginplot plot of Diameter and Dge")
+
+
+stripplot(tree_imp, 
+          age ~ diameter|.imp, 
+          col=c("grey","darkred"),
+          pch=c(1,20))
+
+# xyplot(tree_imp, 
+#        age ~ diameter | .imp,
+#        pch=c(1,20),
+#        cex = 1.4,
+#        col=c("grey","darkred"))
+
+#ggplot(miss_data, aes(y = age, x = diameter,  color = 'blue2')) +
+#  geom_point() +
+#  geom_smooth(method = "lm", col = "red3") +
+#  theme_classic() +
+#  ggtitle("Age vs Diameter")   
+
+```
+
+
+```{r echo = FALSE, include=FALSE, fig.align='center'}
+
+d1 <- complete(tree_imp, 2); d1
+d2 <- complete(tree_imp, 2); d2
+densityplot(tree_imp, 
+            scales = list(x = list(relation = "free")), 
+            ayout = c(2, 1),  
+            main = "Densityplot of Multiple Imputation")
+
+stripplot(tree_imp,  age   ~ diameter|.imp)
+
+xyplot(tree_imp, 
+       age   ~ diameter|.imp,  
+       pch=c(1,20),
+       col=c("grey","darkred"))
+ 
+```
+ 
+## Regression  
+ 
+```{r echo = FALSE, include=FALSE, fig.align='center'}
+ 
+regm <- lm(age~diameter, data = d1)
+summary(regm)
+
+plot(regm$residual,
+     x=d1$diameter, 
+     xlab="Cholesterol",ylab="Residual"); abline(0,0)
+
+ 
+regm_imp <- with(data=tree_imp, lm(age~diameter))
+
+regm_imp[[4]][[1]]
+regm_imp[[4]][[2]]
+
+
+bmireg <- pool(regm_imp)
+summary(bmireg)
+
+```
+ 
+# PART II 
+
+
+```{r echo = FALSE, include=FALSE}
+ 
+df <- read.csv("./data/nhanes.csv", 
+               stringsAsFactors = FALSE, 
+               strip.white=TRUE)
+
+
+ 
+
+summary(df)
+str(df)
+ 
+
+```
+
+
+ 
+ 
+ 
+ 
