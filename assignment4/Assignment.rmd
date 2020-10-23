@@ -21,7 +21,7 @@ library(VIM)
 
 ```
 
-# Part I
+# Question I
 
 ```{r echo = FALSE, include=FALSE}
 df <- read.csv("./data/treeage.txt", 
@@ -37,14 +37,12 @@ miss_data <- df
 
 ```
  
-## 1. Create missging values
+## Task 1.1 
 
 
 ```{r echo = FALSE, include=FALSE}
 set.seed(95)
-
 miss_data[head(sample(20), 0.3 * nrow(miss_data)), ]$age <- NA
-
 ```
 
 The following code is used to replace 30% age with missing value randomly. 
@@ -58,104 +56,224 @@ Here is the new dataset withing missing value.
 xtable(miss_data)
 ```
 
-## 2. Multiple Imputation  
 
-```{r echo = FALSE, include=FALSE, out.width=c('50%', '50%'), fig.align='center'}
+```{r echo = FALSE, include=FALSE}
 
 tree_imp <- mice(miss_data,
-                 m=5, 
+                 m=50, 
                  defaultMethod=c("norm","logreg","polyreg","polr"), 
                  print=F)
 
 
-marginplot(miss_data[,c("diameter","age")],
-           col=c("lightblue3","darkred"),
-           cex.numbers=1.2,
-           pch=19, 
-           main = "marginplot plot of Diameter and Dge")
 
-
-stripplot(tree_imp, 
-          age ~ diameter|.imp, 
-          col=c("grey","darkred"),
-          pch=c(1,20))
-
-# xyplot(tree_imp, 
-#        age ~ diameter | .imp,
-#        pch=c(1,20),
-#        cex = 1.4,
-#        col=c("grey","darkred"))
-
-#ggplot(miss_data, aes(y = age, x = diameter,  color = 'blue2')) +
-#  geom_point() +
-#  geom_smooth(method = "lm", col = "red3") +
-#  theme_classic() +
-#  ggtitle("Age vs Diameter")   
 
 ```
 
+## Task 1.2 
 
-```{r echo = FALSE, include=FALSE, fig.align='center'}
+```{r echo = FALSE, out.width=c('50%'), fig.align='center'}
 
-d1 <- complete(tree_imp, 2); d1
-d2 <- complete(tree_imp, 2); d2
 densityplot(tree_imp, 
             scales = list(x = list(relation = "free")), 
             ayout = c(2, 1),  
-            main = "Densityplot of Multiple Imputation")
-
-stripplot(tree_imp,  age   ~ diameter|.imp)
-
-xyplot(tree_imp, 
-       age   ~ diameter|.imp,  
-       pch=c(1,20),
-       col=c("grey","darkred"))
- 
+            main = "Marginplot Distribution of Multiple Imputation")
 ```
- 
-## Regression  
- 
-```{r echo = FALSE, include=FALSE, fig.align='center'}
- 
-regm <- lm(age~diameter, data = d1)
-summary(regm)
 
-plot(regm$residual,
-     x=d1$diameter, 
-     xlab="Cholesterol",ylab="Residual"); abline(0,0)
+```{r echo = FALSE, out.width=c('50%', '50%', '50%', '50%')}
 
- 
-regm_imp <- with(data=tree_imp, lm(age~diameter))
-
-regm_imp[[4]][[1]]
-regm_imp[[4]][[2]]
-
-
-bmireg <- pool(regm_imp)
-summary(bmireg)
+for (imp_index in c(1:4)) {
+  ggplot( data.frame(diameter=miss_data$diameter, 
+                   age = complete(tree_imp, imp_index)$age,  
+                   missing = is.na(miss_data$age) ), 
+        aes(y = age, x = diameter,  color = missing)) +
+        geom_point() +
+        theme_classic() +
+        ggtitle(sprintf("Plot of missing value and observed value for impuned dataset : %d", imp_index))
+}
 
 ```
+
+# xyplot(tree_imp, 
+#       age ~ diameter | .imp,
+#       pch=c(1,20),
+#       cex = 1.4,
+#       col=c("grey","darkred"),
+#       main = "Scatter plot of Diameter vs Dge")
+    
  
+**Conclusion:**
+### Todo
+
+## Task 1.3 
+ 
+### Todo
+ 
+## Task 1.4
+
+Regression  result is : 
+
+```{r echo = FALSE, include=TRUE, fig.align='center', results='asis'}
+
+reg_imp <- with(data=tree_imp, lm(age~diameter))
+
+regm <-  pool(reg_imp)
+
+xtable(summary(regm))
+```
+
+# Question conclusion
+
+
 # PART II 
 
-
+ 
 ```{r echo = FALSE, include=FALSE}
  
 df <- read.csv("./data/nhanes.csv", 
                stringsAsFactors = FALSE, 
-               strip.white=TRUE)
+               strip.white=TRUE,
+               na.strings = c("NA", "."))
 
+drop_cols <- c('sdmvstra', 'sdmvpsu', 'wtmec2yr', 'ridageyr')
+df <- df[, !(names(df) %in% drop_cols )]
 
- 
+df$riagendr = as.factor(df$riagendr)
+df$ridreth2 = as.factor(df$ridreth2)
+df$dmdeduc = as.factor(df$dmdeduc)
+df$indfminc = as.factor(df$indfminc)
 
 summary(df)
 str(df)
+```
+
+## Task 2.1
  
+```{r echo = FALSE, include=FALSE}
+full  <- mice(df,
+              m=2, 
+              defaultMethod=c("pmm","logreg","polyreg","polr"), 
+              print=F)
 
 ```
 
+```{r echo = FALSE, out.width=c('50%', '50%')}
+
+
+xyplot(full, 
+       bmxbmi ~ age | .imp,
+       pch=c(1,20),
+       cex = 1.4,
+       col=c("grey","darkred"),
+       main = "Scatter plot of bmxbmi vs age")
+
+xyplot(full, 
+       bmxbmi ~ riagendr | .imp,
+       pch=c(1,20),
+       cex = 1.4,
+       col=c("grey","darkred"),
+       main = "Scatter plot of bmxbmi vs riagendr")
+
+
+densityplot(full, 
+            scales = list(x = list(relation = "free")), 
+            ayout = c(2, 1),  
+            main = "Densityplot of Multiple Imputation")
+
+```
 
  
+**Conclusions:**
+
+
+
+
+## Task 2.2
+
+
+```{r echo = FALSE, include=TRUE, fig.align='center', results='asis'}
+
+#Build model
+
+tdf <- complete(full, 1)
+tdf$age2 <- tdf$age ^ 0.5
+
+model1 <- lm(data = tdf, 
+             log(bmxbmi) ~ age + riagendr + ridreth2 + dmdeduc + indfminc)
+summary(model1)
+
  
+
+
+model2 <- lm(data = tdf, 
+             log(bmxbmi) ~ age2 + riagendr + ridreth2 + dmdeduc + indfminc)
+summary(model2)
+anova(model1, model2)
+
+
+
+mn <- model2
  
- 
+
+mf <- lm(
+    log(bmxbmi) ~ (age1 + age2 + riagendr + ridreth2 + dmdeduc + indfminc) ^ 2,
+    data = tdf 
+  )
+
+Model_stepwise_aic <- step(mn,
+                           scope = mf,
+                           direction = "both",
+                           trace = 0)
+summary(Model_stepwise_aic)
+
+
+bmireg_imp <- with(data=full, lm(bmxbmi~age + riagendr + ridreth2
+                                         + dmdeduc + indfminc))
+
+# Other mordel for F-test ?
+
+bmireg_pool <-  pool(bmireg_imp)
+
+xtable(summary(bmireg_pool))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
