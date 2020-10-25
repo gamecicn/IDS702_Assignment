@@ -18,6 +18,8 @@ library(ggplot2)
 library(xtable)
 library(mice)
 library(VIM)
+library(sjPlot)
+library(car)
 
 ```
 
@@ -53,7 +55,7 @@ missing_data[head(sample(20), 0.3 * nrow(df)), ]$age <- NA
 
 This is the new dataset with missing value.
 
-```{r echo = FALSE, results='asis'}
+```{r echo = FALSE, results='asis', caption = "Dataset with missing value"}
 xtable(miss_data)
 ```
 
@@ -85,7 +87,7 @@ for (imp_index in c(1:4)) {
         aes(y = age, x = diameter,  color = missing)) +
         geom_point() +
         theme_classic() +
-        ggtitle(sprintf("Missing value and observed value for impuned dataset : %d",                                imp_index)))
+        ggtitle(sprintf("Missing value and observed value for imputed dataset : %d",                                imp_index)))
 }
 
 ```
@@ -101,7 +103,7 @@ The model is :
 $$
 age_{i} = \beta_{1}*diameter_{i} + \beta_{0} + \varepsilon_{i};\varepsilon \overset{iid}{\sim} \mathcal{N}(\mu,\,\sigma^{2})\
 $$
-
+**Model Assessment**
 The assessment plot of one of the imputed datasets is as follows. According to residual analysis, there is no obvious evidence indicate the assumptions of linear regression were broken. There are some high leverage points; however,  there are not high influence data. Hence, these data points can be preserved in the model without worry.
 
 
@@ -116,7 +118,11 @@ plot(m1, which=5)
 ```
 
 
-```{r echo = FALSE, message=FALSE, fig.align='center', results='asis'}
+
+**Conclusion** 
+
+
+```{r echo = FALSE, message=FALSE, fig.align='center', results='asis', caption = "Coefficient-Level Estimates"}
 
 reg_imp <- with(data=tree_imp, lm(age~diameter))
 
@@ -124,8 +130,6 @@ regm <-  pool(reg_imp)
 
 xtable(summary(regm))
 ```
-
-**Conclusion** 
 
 The table is the summary of the model applying on multiple imputation datasets. The diameter has positive effects on the age of trees because its p-value is significant. Suppose the diameter increase by 1 unit, the age of the tree would increase by 11 years. The intercept's p-value is near 1, which means it is not significant. If there is more data, then a better model can be obtained, in which intercept may be significant. 
 
@@ -194,6 +198,7 @@ full <- readRDS(file = "part2_full.rds")
 #            main = "Densityplot of Multiple Imputation")
 
 ```
+**Plots: **
 
 ![](./meta/p2_sca_bmi_vs_age.png){height=50%}
 
@@ -202,11 +207,10 @@ full <- readRDS(file = "part2_full.rds")
  
 **Conclusions:**
 
-
+According to the plot scatter plots of bmxbmi by age and riagendr, I do not think the imputation is great. Because the imputation data (red points) clusters in a part of the observed data (gray points), which means some factors are ignored in this imputation method. Bmxbmi and bmxaml's marginal distributions show quite different distribution between imputation data and observed data.  Considering the dataset's size, the differences are considerable. The quality of the imputation model is not satisfying.
 
 
 ## Task 2.2
-
 
 ```{r echo = FALSE, message=FALSE, include = FALSE, fig.align='center', results='asis'}
 
@@ -220,9 +224,14 @@ m1 <- lm(data = tdf,
 # summary(model1)
 
 m2 <- lm(data = tdf, 
-             log(bmxbmi) ~ age2 + riagendr + ridreth2 + dmdeduc + indfminc)
+             log(bmxbmi) ~ age2 + riagendr + ridreth2 + dmdeduc + indfminc )
 summary(m2)
-#anova(model1, model2)
+m3 <- lm(data = tdf, 
+             log(bmxbmi) ~ age2 + riagendr + ridreth2 + dmdeduc + indfminc +
+                           age2:dmdeduc)
+summary(m3)
+
+anova(m2, m3)
 #
 #
 #
@@ -248,29 +257,71 @@ summary(m2)
 
 ```
 
+The model is 
 $$
-age_{i} = \beta_{1}*diameter_{i} + \beta_{0} + \varepsilon_{i};\varepsilon \overset{iid}{\sim} \mathcal{N}(\mu,\,\sigma^{2})\
+\begin{aligned}
+log(bmxbmi_{i}) = & \beta_{1}*\sqrt{age}_{i} + \beta_{2}*riagendr_{i} + \beta_{3}*dmdeduc_{i}  + \\ 
+                  & \beta_{4}*indfminc_{i} + \beta_{5}*dmdeduc_{i}:\sqrt{age}_{i} + \beta_{0} + \varepsilon_{i}; \\
+                  & \varepsilon \overset{iid}{\sim} \mathcal{N}(\mu,\,\sigma^{2})\
+\end{aligned}
 $$
+
+**Model Exploration**
+
+```{r echo = FALSE, message=FALSE, fig.align='center', out.width=c('50%'), warning=FALSE}
+
+ggplot(tdf, aes(x = age2, y = bmxbmi)) +
+    geom_point(alpha = .5, colour = "blue4") +
+    geom_smooth(col = "red3") +
+    theme_classic() + 
+    labs(title = "BMI vs Square of Age influenced by education") + 
+    facet_wrap(~ dmdeduc)
+
+```
+
+In the model exploring stage, I tried to compare many models bu ANOVA test on a complete data set and finally decided to use the above model. After that, the model was applied to another data set, and a similar conclusion was reached. Then I decided to use the model to predict BMI. In the model fitting step, I found the log transformation could cause the response variable closer to the normal distribution. Moreover, the ANOVA test suggests that the model will perform better after transforming age to the power of 0.5. So I kept these two transformations in the final model.
+
+The plot above illustrates the interaction between the square of age and education versus the response variable. The bim trend with the square of age is different according to education. This interaction is also confirmed in the model fitting step.
+
+For the indfminc variable, I try to combine different categories, such as combining incomes of less than US$20,000 into a group and combining incomes of more than US$20,000 into a group. However, the ANOVA test suggested that this kind of merging will not improve the model's effect, so I finally gave up this kind of merging. I also used AIC, BIC did a model search in different directions, and the final result was the same as the above model. So I finally decided to use this model.
+
+**Model Assessment**
+
+From the residual plots, there are no obviously violations of assumptions:
+
+1) Linearity: The residual versus predictor plot seems random. 
+
+2) Independence and Equal Variance: Absence of any pattern, randomness and wide-spread distributions over the spectrum support these assumptions.
+
+3) QQ-plot supports the assumption of Normality generally as the plot is a straight line 
+   between 2 standardized residuals. 
+
+Also, according to Cook's distance, there is no high leverage data point, which is good news for the imputed dataset. To ensure no multicollinearity, VIF scores were generated, noticing that all variables had VIF value below 5.  
 
 ```{r echo = FALSE, message=FALSE, out.width=c('50%', '50%', '50%', '50%')}
 
-plot(m1, which=1)
-plot(m1, which=2)
-plot(m1, which=3)
-plot(m1, which=5)
+plot(m3, which=1)
+plot(m3, which=2)
+plot(m3, which=3)
+plot(m3, which=4)
 ```
 
+```{r echo = FALSE, message=FALSE, results='asis', caption = "VIF Check"}
 
-```{r echo = FALSE, message=FALSE, fig.align='center', results='asis'}
+xtable(vif(m3))
 
-bmireg_imp <- with(data=full, m1)
+```
+
+```{r echo = FALSE, message=FALSE, fig.align='center', results='asis',  caption = "Coefficient-Level Estimates"}
+
+bmireg_imp <- with(data=full, m3)
 
 bmireg_pool <-  pool(bmireg_imp)
 
 xtable(summary(bmireg_pool))
 ```
 
-
+**Conclusion**
 
 
 
