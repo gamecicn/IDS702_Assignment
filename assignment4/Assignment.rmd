@@ -1,5 +1,5 @@
 ---
-title: "Assignment 4"
+title: "Assignment 4 (need grade)"
 author: "Maobin Guo"
 output:
   pdf_document: default
@@ -24,7 +24,7 @@ library(car)
 
 ```
 
-# Question I
+# Part I
 
 ```{r echo = FALSE, include=FALSE}
 df <- read.csv("./data/treeage.txt", 
@@ -76,7 +76,7 @@ tree_imp <- mice(miss_data,
 densityplot(tree_imp, 
             scales = list(x = list(relation = "free")), 
             ayout = c(2, 1),  
-            main = "Marginplot Distribution of Multiple Imputation")
+            main = "Marginal Distribution")
 ```
 
 ```{r echo = FALSE, message=FALSE, out.width=c('50%', '50%', '50%', '50%')}
@@ -105,7 +105,7 @@ $$
 age_{i} = \beta_{1}*diameter_{i} + \beta_{0} + \varepsilon_{i};\varepsilon \overset{iid}{\sim} \mathcal{N}(\mu,\,\sigma^{2})\
 $$
 **Model Assessment**
-The assessment plot of one of the imputed datasets is as follows. According to residual analysis, there is no obvious evidence indicate the assumptions of linear regression were broken. There are some high leverage points; however,  there are not high influence data. Hence, these data points can be preserved in the model without worry.
+The assessment plots of one of the imputed datasets are as follows. According to residual analysis, there is no obvious evidence indicate the assumptions of linear regression were broken. Moreover, there is not high influence data to concern.
 
 
 ```{r echo = FALSE, message=FALSE, out.width=c('50%', '50%', '50%', '50%')}
@@ -208,8 +208,7 @@ full <- readRDS(file = "part2_full.rds")
  
 **Conclusions:**
 
-According to the plot scatter plots of bmxbmi by age and riagendr, I do not think the imputation is great. Because the imputation data (red points) clusters in a part of the observed data (gray points), which means some factors are ignored in this imputation method. Bmxbmi and bmxaml's marginal distributions show quite different distribution between imputation data and observed data.  Considering the dataset's size, the differences are considerable. The quality of the imputation model is not satisfying.
-
+According to the scatter plots of bmxbmi by age and riagendr, I do not think the imputation is great. Because the imputation data (red points) clusters at a subset of the observed data (gray points). Bmxbmi and bmxaml's marginal distributions show quite different distribution between imputation data and observed data.  Considering the dataset's size, the differences are considerable. The quality of the imputation model is not satisfying.
 
 ## Task 2.2
 
@@ -275,16 +274,16 @@ ggplot(tdf, aes(x = age2, y = bmxbmi)) +
     geom_point(alpha = .5, colour = "blue4") +
     geom_smooth(col = "red3") +
     theme_classic() + 
-    labs(title = "BMI vs Square of Age influenced by education") + 
+    labs(title = "BMI vs Square Root of Age influenced by education") + 
     facet_wrap(~ dmdeduc)
 
 ```
 
-In the model exploring stage, I tried to compare many models bu ANOVA test on a complete data set and finally decided to use the above model. After that, the model was applied to another data set, and a similar conclusion was reached. Then I decided to use the model to predict BMI. In the model fitting step, I found the log transformation could cause the response variable closer to the normal distribution. Moreover, the ANOVA test suggests that the model will perform better after transforming age to the power of 0.5. So I kept these two transformations in the final model.
+In the model exploring stage, I tried to compare many models with ANOVA test on a complete data set and finally decided to use the above model. After that, the model was applied to another data set, and a similar conclusion was reached. Then I decided to use the model to predict BMI. In the model fitting step, I found the log transformation could cause the response variable closer to the normal distribution. Moreover, the ANOVA test suggests that the model will perform better after transforming age to the square root of age ($\sqrt{age}$). So I kept these two transformations in the final model.
 
-The plot above illustrates the interaction between the square of age and education versus the response variable. The bim trend with the square of age is different according to education. This interaction is also confirmed in the model fitting step.
+The plot above illustrates the interaction between the square root of age and education versus the response variable. The BMI trend with the square root of age is different according to education. This interaction is also confirmed in the model fitting step.
 
-For the indfminc variable, I try to combine different categories, such as combining incomes of less than US$20,000 into a group and combining incomes of more than US$20,000 into a group. However, the ANOVA test suggested that this kind of merging will not improve the model's effect, so I finally gave up this kind of merging. I also used AIC, BIC did a model search in different directions, and the final result was the same as the above model. So I finally decided to use this model.
+For the indfminc variable, I try to combine some different categories together, such as combining incomes of less than US$20,000 into a group and combining incomes of more than US$20,000 into another  group. However, the ANOVA test suggested that this kind of merging will not improve the model's performance, so I finally gave up this kind of merging. I also used AIC, BIC did a model search in different directions, and the final result was the same as the above model. So I finally decided to use this model.
 
 **Model Assessment**
 
@@ -294,8 +293,7 @@ From the residual plots, there are no obviously violations of assumptions:
 
 2) Independence and Equal Variance: Absence of any pattern, randomness and wide-spread distributions over the spectrum support these assumptions.
 
-3) QQ-plot supports the assumption of Normality generally as the plot is a straight line 
-   between 2 standardized residuals. 
+3) QQ-plot supports the assumption of Normality generally as the plot is a straight line.
 
 Also, according to Cook's distance, there is no high leverage data point, which is good news for the imputed dataset. To ensure no multicollinearity, VIF scores were generated, noticing that all variables had VIF value below 5.  
 
@@ -324,9 +322,9 @@ xtable(summary(bmireg_pool))
 
 **Conclusion**
 
-The baseline values incorporated in the intercept are age = 0, male, Non-Hispanic white, less than high school education, and income below $4999. From the model summary, we found that age, gender, race, education, and the interaction between the square of age and education are strongly associated (statistically significant) with the BMI. Almost all income categories are statistically significant with BMI except indfminc9 ($55,000 to $64,999). Considering that no other income categories are statistically significant, and the coefficient of indfminc9 is small, I tend to consider income would not affect a person's BIM.
+The baseline values incorporated in the intercept are age = 0, male, Non-Hispanic white, less than high school education, and income below $4999. From the model summary, we found that age, gender, race, education, and the interaction between the square root of age and education are strongly associated (statistically significant) with the BMI. Almost all income categories are not statistically significant with BMI except indfminc9 ($55,000 to $64,999). Considering that no other income categories are statistically significant, and the coefficient of indfminc9 is small, I tend to consider income would not affect a person's BIM.
 
-1. Controlling other factors, one year raise on the square of age would increase his/her BMI by 8.4%
+1. Controlling other factors, one year raise on the square root of age would increase his/her BMI by 8.4%
 
 2. Controlling other factors, the gender of female would raise BMI by 2.1%
 
@@ -334,9 +332,9 @@ The baseline values incorporated in the intercept are age = 0, male, Non-Hispani
 
 4. Controlling other factors, high school, and more than a high school diploma would increase BMI by 33% and 30%.
 
-5. At the significance level of p<0.001, keeping other variables constant for every increase in the square of age, a person with a high school diploma his/her BMI tends to decrease by 3.8%.
+5. At the significance level of p<0.001, keeping other variables constant for every increase in the square root of age, a person with a high school diploma his/her BMI tends to decrease by 3.8%.
 
-6. At the significance level of p<0.001, keeping other variables constant for every increase in the square of age, a person with more than a high school diploma his/her BMI tends to decrease by 3.6%.
+6. At the significance level of p<0.001, keeping other variables constant for every increase in the square root of age, a person with more than a high school diploma his/her BMI tends to decrease by 3.6%.
 
 
 
