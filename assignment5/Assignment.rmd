@@ -1,0 +1,98 @@
+---
+title: "Assignment 4 (need grade)"
+author: "Maobin Guo"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    
+    df_print: paged
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+
+options(warn=-1)
+options(digits=4)
+options(xtable.comment = FALSE)
+
+library(ggplot2)
+library(xtable)
+library(sjPlot)
+library(car)
+library(cobalt)
+library(MatchIt)
+library(randomForest)
+
+```
+
+# Part I
+
+```{r echo = FALSE, include=FALSE}
+df <- read.csv("./data/Asthma.txt", 
+               sep = " ",
+               stringsAsFactors = FALSE, 
+                strip.white=TRUE)
+
+summary(df)
+str(df)
+
+df$pg <- as.factor(df$pg)
+df$i_race <- as.factor(df$i_race)
+df$i_insu <- as.factor(df$i_insu)
+df$i_drug <- as.factor(df$i_drug)
+df$i_aqoc <- as.factor(df$i_aqoc)
+
+df$com_t  <- df$com_t  - mean(df$com_t)
+df$pcs_sd <- df$pcs_sd - mean(df$pcs_sd)
+df$mcs_sd <- df$mcs_sd - mean(df$mcs_sd)
+
+df$i_sex  <- relevel(factor(df$i_sex),  ref = 1)
+df$i_educ <- relevel(factor(df$i_educ), ref = 5)
+df$i_seve <- relevel(factor(df$i_seve), ref = 3)
+
+#miss_data <- df
+
+```
+ 
+## Answer 1
+
+```{r echo = FALSE, include=FALSE}
+
+# pg (treatment assignment)
+# i_aqoc  outcome
+
+df1 <- df[df$pg==1, ]
+df2 <- df[df$pg==2, ]
+
+asd <- bal.tab(list(treat=df$pg,covs=df[,2:10],estimand="ATT"))
+asd$Balance[abs(asd$Balance$Diff.Un) > 0.1, ] 
+```
+
+The following covariates of this dataset are not balanced because the absolute value of Diff.Un for this variables are bigger than 0.1
+
+- i_sex
+- i_race
+- i_educ
+- com_t
+- pcs_sd
+
+## Answer 2.a
+
+
+## Answer 2.b
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
