@@ -1,5 +1,5 @@
 ---
-title: "Assignment 4 (need grade)"
+title: "Assignment 5"
 author: "Maobin Guo"
 output:
   pdf_document: default
@@ -12,7 +12,7 @@ output:
 ```{r setup, echo = FALSE, include=FALSE}
 
 options(warn=-1)
-options(digits=4)
+options(digits=2)
 options(xtable.comment = FALSE)
 
 library(ggplot2)
@@ -33,8 +33,8 @@ df <- read.csv("./data/Asthma.txt",
                stringsAsFactors = FALSE, 
                 strip.white=TRUE)
 
-summary(df)
-str(df)
+df[df$pg==2, ]$pg = 0
+
 
 df$pg <- as.factor(df$pg)
 df$i_race <- as.factor(df$i_race)
@@ -50,7 +50,13 @@ df$i_sex  <- relevel(factor(df$i_sex),  ref = 1)
 df$i_educ <- relevel(factor(df$i_educ), ref = 5)
 df$i_seve <- relevel(factor(df$i_seve), ref = 3)
 
+summary(df)
+str(df)
+
 #miss_data <- df
+
+
+
 
 ```
  
@@ -60,9 +66,6 @@ df$i_seve <- relevel(factor(df$i_seve), ref = 3)
 
 # pg (treatment assignment)
 # i_aqoc  outcome
-
-df1 <- df[df$pg==1, ]
-df2 <- df[df$pg==2, ]
 
 asd <- bal.tab(list(treat=df$pg,covs=df[,2:10],estimand="ATT"))
 asd$Balance[abs(asd$Balance$Diff.Un) > 0.1, ] 
@@ -76,22 +79,217 @@ The following covariates of this dataset are not balanced because the absolute v
 - com_t
 - pcs_sd
 
+```{r echo = FALSE, results='asis', message=FALSE , warning=FALSE}
+xtable(asd$Balance[abs(asd$Balance$Diff.Un) > 0.1, ])
+```
+
+
+
+```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
+
+m1 <- glm(pg ~ i_age + i_sex + i_race + i_educ +
+               i_insu + i_drug + i_seve + com_t + 
+               pcs_sd + mcs_sd, 
+          data = df,
+          family = binomial)
+summary(m1)
+
+pscores <- predict(m1, type = "response")
+summary(pscores)
+
+ggplot(df, 
+       aes(pscores)) +
+       geom_histogram(alpha=.6,fill=rainbow(10),bins=10)
+
+df$pscores <- pscores
+
+```
+
+
 ## Answer 2.a
+
+```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
+
+#look at distribution of propensity scores for treateds and controls
+ 
+#ggplot(df, aes(y=pscores, x=pg, fill=pg)) + geom_boxplot()
+#ggplot(df, aes(x=pscores, fill=pg)) + geom_density(alpha=.3) + xlim(0, 1)
+
+range_p2 <- c(min(df[df$pg == 0, ]$pscores), max(df[df$pg == 0, ]$pscores))
+
+range_p1 <- c(min(df[df$pg == 1, ]$pscores), max(df[df$pg == 1, ]$pscores))
+
+# P2 whoes propensitiy score is not in P1's propensitiy score range
+
+df[(df$pg == 0) & ((df$pscores < range_p1[1]) | (df$pscores > range_p1[2] )), ]
+df[(df$pg == 1) & ((df$pscores < range_p2[1]) | (df$pscores > range_p2[2] )), ]
+
+
+dfol <- rbind(
+ df[(df$pg == 0) & ((df$pscores > range_p1[1]) & (df$pscores < range_p1[2] )), ], 
+ df[(df$pg == 1) & ((df$pscores > range_p2[1]) & (df$pscores < range_p2[2] )), ]
+)
+
+
+```
+
+There are `r dim(df)[1] - dim(dfol)[1]` observations with an estimated propensity score that is out of the range of e in the other group. Accroding to instruction, these
+observations were discarded. 
 
 
 ## Answer 2.b
 
+Compare with raw data, the balance of matched data is much better. The following
+covariance becomes balanced:
+
+- i_sex
+- i_race
+
+The diff value of i_educ still slightly bigger than 0.1, however it is much 
+balance than its diff value in raw data. 
+
+
+```{r echo = FALSE, include=FALSE}
+###### Propensity scores matching
+#main call-- embed the logistic regression inside the call
+#start with a main effects only regression
+matches_res <- matchit(pg ~ i_age + i_sex + i_race + i_educ +
+                          i_insu + i_drug + i_seve + com_t + 
+                          pcs_sd + mcs_sd,
+                          method = "nearest", 
+                          distance = "logit", 
+                          data = dfol)
+
+#df$pscores = pscores
+#ggplot(matched_df, aes(y=distance, x=pg, fill=pg)) +
+#  geom_boxplot()
+
+matched_df  <- match.data(matches_res)
+
+matched_asd <- bal.tab(list(treat=matched_df$pg, 
+                            covs=matched_df[,2:10],
+                            estimand="ATT"))
+
+matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ]
+ 
+```
+
+```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE}
+xtable(matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ])
+```
+ 
+
+
+## Answer 2.c
+
+```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
+
+#p1 <- predict(m1, type = "response", newdata = matched_df[matched_df$pg==1, ])
+#p2 <- predict(m1, type = "response", newdata = matched_df[matched_df$pg==0, ])
+
+#se <- sqrt(var(minwagematcheddata$EmploymentPost[minwagematcheddata$PA.NJ==1])/73 + 
+#            var(minwagematcheddata$EmploymentPost[minwagematcheddata$PA.NJ==0])/73)
+
+n = nrow(matched_df)/2
+
+diff_mean <- mean((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) - 
+             mean((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n)
+
+
+se <- sqrt(var((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) + 
+           var((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n))
+
+diff_ci = c(diff_mean - 1.96 * se, diff_mean + 1.96 * se)
+
+```
+
+Base on the 1-on-1 data, the SE is `r se ` and the 95% confidence interval is  
+[`r diff_ci`]. Because the confidence interval contains 0, we cannot claim that 
+different physician group cause the service difference.
+
+
+## Answer 2.d
+
+?? use which dataset?  matched or whole ?
+?? Is pre-treatment include pysical assignment ?
+?? Need AIC steps search ?
+
+```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
+
+m5 <- glm(i_aqoc ~ i_age + i_sex + i_race + i_educ +
+                   i_insu + i_drug + i_seve + com_t + 
+                   pcs_sd + mcs_sd + pscores, 
+          data = dfol,
+          family = binomial)
+summary(m5)
+
+
+m6 <- glm(i_aqoc ~ i_age + i_sex + i_race + i_educ +
+                   i_insu + i_drug + i_seve + com_t + 
+                   pcs_sd + mcs_sd + pscores, 
+          data = matched_df,
+          family = binomial)
+summary(m6)
 
 
 
 
+```
+
+## Answer 2.e
+?? whay control sample size is bigger than another gourp ?
+
+Sample sizes:
+          Control Treated
+All           133      97
+Matched       102      97
+Unmatched      31       0
+Discarded       0       0
 
 
+```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
+
+matches_res <- matchit(pg ~ i_age + i_sex + i_race + i_educ +
+                          i_insu + i_drug + i_seve + com_t + 
+                          pcs_sd + mcs_sd,
+                          method = "nearest", 
+                          distance = "logit", 
+                          replace=TRUE,
+                          ratio =5,
+                          data = dfol)
+ 
+
+matched_df  <- match.data(matches_res)
+
+matched_asd <- bal.tab(list(treat=matched_df$pg, 
+                            covs=matched_df[,2:10],
+                            estimand="ATT"))
+
+matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ]
 
 
+n = nrow(matched_df)/2
+
+diff_mean <- mean((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) - 
+             mean((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n)
 
 
+se <- sqrt(var((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) + 
+           var((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n))
 
+diff_ci = c(diff_mean - 1.96 * se, diff_mean + 1.96 * se)
+
+```
+
+```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE}
+xtable(matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ])
+
+
+```
+
+## Answer 3
+
+The method  one-to-one is better. Why ? ....
 
 
 
