@@ -69,9 +69,10 @@ str(df)
 
 asd <- bal.tab(list(treat=df$pg,covs=df[,2:10],estimand="ATT"))
 asd$Balance[abs(asd$Balance$Diff.Un) > 0.1, ] 
+
 ```
 
-The following covariates of this dataset are not balanced because the absolute value of Diff.Un for this variables are bigger than 0.1
+The following covariates of this dataset are not balanced because the absolute value of difference for this variables are bigger than 0.1 .
 
 - i_sex
 - i_race
@@ -80,7 +81,9 @@ The following covariates of this dataset are not balanced because the absolute v
 - pcs_sd
 
 ```{r echo = FALSE, results='asis', message=FALSE , warning=FALSE}
+
 xtable(asd$Balance[abs(asd$Balance$Diff.Un) > 0.1, ])
+
 ```
 
 
@@ -210,46 +213,33 @@ different physician group cause the service difference.
 
 ## Answer 2.d
 
-?? use which dataset?  matched or whole ?
-?? Is pre-treatment include pysical assignment ?
-?? Need AIC steps search ?
-
 ```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
 
-m5 <- glm(i_aqoc ~ i_age + i_sex + i_race + i_educ +
-                   i_insu + i_drug + i_seve + com_t + 
-                   pcs_sd + mcs_sd + pscores, 
-          data = dfol,
-          family = binomial)
-summary(m5)
-
-
-m6 <- glm(i_aqoc ~ i_age + i_sex + i_race + i_educ +
+m6 <- glm(i_aqoc ~ pg+i_age + i_sex + i_race + i_educ +
                    i_insu + i_drug + i_seve + com_t + 
                    pcs_sd + mcs_sd + pscores, 
           data = matched_df,
           family = binomial)
 summary(m6)
 
-
-
-
 ```
 
+
+```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE, fig.cap = "Coefficient of regression model"}
+xtable(summary(m6))
+```
+
+
+In this modle pg1's p value is `r summary(m6)$coefficients['pg1',][4][[1]]` which means
+it is statistical significant and its coefficient is `r summary(m6)$coefficients['pg1',][1][[1]]` which means assigned to treatment group 1 
+would increase the odds of patient's satisfaction status by `r exp(summary(m6)$coefficients['pg1',][1][[1]])*100 - 100`%. The AIC of this model is `r AIC(m6)`.
+
+
 ## Answer 2.e
-?? whay control sample size is bigger than another gourp ?
-
-Sample sizes:
-          Control Treated
-All           133      97
-Matched       102      97
-Unmatched      31       0
-Discarded       0       0
-
-
+ 
 ```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
 
-matches_res <- matchit(pg ~ i_age + i_sex + i_race + i_educ +
+matchesrep_res <- matchit(pg ~ i_age + i_sex + i_race + i_educ +
                           i_insu + i_drug + i_seve + com_t + 
                           pcs_sd + mcs_sd,
                           method = "nearest", 
@@ -257,39 +247,65 @@ matches_res <- matchit(pg ~ i_age + i_sex + i_race + i_educ +
                           replace=TRUE,
                           ratio =5,
                           data = dfol)
+
  
 
-matched_df  <- match.data(matches_res)
+matchedrep_df  <- match.data(matchesrep_res)
 
-matched_asd <- bal.tab(list(treat=matched_df$pg, 
-                            covs=matched_df[,2:10],
+matchedrep_asd <- bal.tab(list(treat=matchedrep_df$pg, 
+                            covs=matchedrep_df[,2:10],
                             estimand="ATT"))
 
-matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ]
+matchedrep_asd$Balance[abs(matchedrep_asd$Balance$Diff.Un) > 0.1, ]
 
 
 n = nrow(matched_df)/2
 
-diff_mean <- mean((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) - 
-             mean((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n)
+diff_mean <- mean((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==0]) - 1)/n) - 
+                mean((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==1]) - 1)/n)
 
 
-se <- sqrt(var((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) + 
-           var((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n))
+se <- sqrt(var((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==0]) - 1)/n) + 
+           var((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==1]) - 1)/n))
 
 diff_ci = c(diff_mean - 1.96 * se, diff_mean + 1.96 * se)
 
+m7 <- glm(i_aqoc ~ pg+i_age + i_sex + i_race + i_educ +
+                   i_insu + i_drug + i_seve + com_t + 
+                   pcs_sd + mcs_sd + pscores, 
+          data = matchedrep_df,
+          family = binomial)
+summary(m7)
+
 ```
 
+With the new matching policy, the balance table is :
+ 
 ```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE}
-xtable(matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ])
-
-
+xtable(matchedrep_asd$Balance[abs(matchedrep_asd$Balance$Diff.Un) > 0.1, ])
 ```
+
+The SE is `r se` and the 95% confidence interval is [`r diff_ci`].
+
+ ```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE, fig.cap = "Coefficient of regression model"}
+xtable(summary(m7))
+``` 
+The AIC of this model is `r AIC(m7)`.
+
+\hfill\break
+\hfill\break
+\hfill\break
 
 ## Answer 3
 
-The method  one-to-one is better. Why ? ....
+Comparing with the result, the one-to-one matching policy is more reliable than one-to-many because of the following reasons.
+
+1. The blance of matching data by one-to-one method is better, cause its every item's diff value
+   is smaller than the corespondent value of one-to-many
+   
+2. The regression model's AIC of one-to-one method is smaller than the AIC of one-to-many.
+   (`r AIC(m6)` VS `r AIC(m7)`)
+   
 
 
 
