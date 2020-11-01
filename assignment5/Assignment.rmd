@@ -185,27 +185,21 @@ xtable(matched_asd$Balance[abs(matched_asd$Balance$Diff.Un) > 0.1, ])
 
 ```{r echo = FALSE, include=FALSE, results='asis', message=FALSE}
 
-#p1 <- predict(m1, type = "response", newdata = matched_df[matched_df$pg==1, ])
-#p2 <- predict(m1, type = "response", newdata = matched_df[matched_df$pg==0, ])
-
-#se <- sqrt(var(minwagematcheddata$EmploymentPost[minwagematcheddata$PA.NJ==1])/73 + 
-#            var(minwagematcheddata$EmploymentPost[minwagematcheddata$PA.NJ==0])/73)
-
 n = nrow(matched_df)/2
 
-diff_mean <- mean((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) - 
-             mean((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n)
+diff_mean <- mean(as.numeric(matched_df$i_aqoc[matched_df$pg==0])-1) - 
+             mean(as.numeric(matched_df$i_aqoc[matched_df$pg==1])-1)
 
 
 se <- sqrt(var((as.numeric(matched_df$i_aqoc[matched_df$pg==0]) - 1)/n) + 
            var((as.numeric(matched_df$i_aqoc[matched_df$pg==1]) - 1)/n))
-
+ 
 diff_ci = c(diff_mean - 1.96 * se, diff_mean + 1.96 * se)
 
 ```
 
-Base on the 1-on-1 data, the SE is `r se ` and the 95% confidence interval is  
-[`r diff_ci`].Because the confidence interval contains 0, there is not enough evidence that different physician groups cause the service difference.
+Base on the 1-on-1 data, the SE is `r se ` and the 95% confidence interval is  [`r diff_ci`]. According to the confidence interval, causal effect Q is negative 
+which means physician group 2 would decrease the odds of satisfaction status of patient. 
 
 
 ## Answer 2.d
@@ -255,13 +249,13 @@ matchedrep_asd$Balance[abs(matchedrep_asd$Balance$Diff.Un) > 0.1, ]
 
 n = nrow(matched_df)/2
 
-diff_mean <- mean((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==0]) - 1)/n) - 
-                mean((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==1]) - 1)/n)
+diff_mean <- mean(as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==0])-1) - 
+             mean(as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==1])-1)
 
 
 se <- sqrt(var((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==0]) - 1)/n) + 
            var((as.numeric(matchedrep_df$i_aqoc[matchedrep_df$pg==1]) - 1)/n))
-
+ 
 diff_ci = c(diff_mean - 1.96 * se, diff_mean + 1.96 * se)
 
 m7 <- glm(i_aqoc ~ pg+i_age + i_sex + i_race + i_educ +
@@ -273,18 +267,18 @@ summary(m7)
 
 ```
 
-With the new matching policy, the balance table is :
+For the one-to-many matching policy, the balance table is :
  
 ```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE}
 xtable(matchedrep_asd$Balance[abs(matchedrep_asd$Balance$Diff.Un) > 0.1, ])
 ```
 
-The SE is `r se` and the 95% confidence interval is [`r diff_ci`].
+Based on the above data, the results of the new matching method are similar to the previous ones. The standard error is `r se` and the 95% confidence interval is [`r diff_ci`]. These data also show that the second treatment group will reduce patient satisfaction. Pg1's coefficient is `r summary(m7)$coefficients['pg1',][1][[1]]`, which means assigned to treatment group 1 would increase the odds of a patient’s satisfaction status by `r exp(summary(m7)$coefficients['pg1',][1][[1]])*100 - 100`%. The AIC of this model is `r AIC(m7)`.
 
- ```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE, fig.cap = "Coefficient of regression model"}
+```{r echo = FALSE, include=TRUE, results='asis', message=FALSE, warning=FALSE, fig.cap = "Coefficient of regression model"}
 xtable(summary(m7))
 ``` 
-The AIC of this model is `r AIC(m7)`.
+
 
 \hfill\break
 \hfill\break
